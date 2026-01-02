@@ -8,17 +8,24 @@ dotenv.config();
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.static("public"));
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-app.get("/chat", async (req, res) => {
+app.post("/chat", async (req, res) => {
 
   try {
+
+    const { message } = req.body;
+    if (!message) {
+      return res.status(400).json({ error: "A prompt message is required."})
+    }
+
     const response = await client.responses.create({
       model: "gpt-5.2",
-      input: "Fammi un breve riassunto su chi è l'autore di Kallocaina, Karin BOYE, e se il libro potrebbe interessarmi. Indica per quali motivi un libro del genere potrebbe interessare ad una persona, senza fare alcuno spoiler.",
+      input: message,
     });
 
     res.json({
