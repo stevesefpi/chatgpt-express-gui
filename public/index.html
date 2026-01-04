@@ -1,22 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat</title>
-    <link rel="stylesheet" href="/styles.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat</title>
+  <link rel="stylesheet" href="/styles.css" />
 </head>
+
 <body>
   <div id="app">
-    <div id="messages"></div>
+    <!-- LOGIN INTERFACE -->
+    <div id="auth">
+      <h2>Login</h2>
 
-    <form id="chatForm">
-      <textarea id="prompt" placeholder="Write your message..."></textarea>
-      <button type="submit">Send</button>
-    </form>
+      <form id="loginForm">
+        <input id="email" type="email" placeholder="Email" autocomplete="email" required />
+        <input id="password" type="password" placeholder="Password" autocomplete="current-password" required />
+        <button type="submit">Login</button>
+      </form>
+
+      <div class="auth-actions">
+        <button id="signupBtn" type="button">Create account</button>
+      </div>
+
+      <div id="authStatus"></div>
+    </div>
+
+    <!-- CHAT -->
+    <div id="chat" style="display:none;">
+      <div id="layout">
+        <!-- SIDEBAR -->
+        <aside id="sidebar">
+          <div class="sidebar-header">
+            <div class="sidebar-title">My chats</div>
+            <button id="newChatBtn" type="button">New</button>
+          </div>
+
+          <div id="chatList"></div>
+
+          <div class="sidebar-footer">
+            <button id="logoutBtn" type="button">Logout</button>
+          </div>
+        </aside>
+
+        <!-- MAIN CHAT AREA -->
+        <main id="main">
+          <div id="messages"></div>
+
+          <form id="chatForm">
+            <textarea id="prompt" placeholder="Write your message..."></textarea>
+            <button type="submit">Send</button>
+          </form>
+        </main>
+      </div>
+    </div>
+
   </div>
 
-  <script src="/chat.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/auth.js"></script>
+  <script type="module" src="/chat.js"></script>
 </body>
 
 </html>
