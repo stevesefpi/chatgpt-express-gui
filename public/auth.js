@@ -1,4 +1,4 @@
-// A tiny helper so we can SEE something happened
+// A helper to see something happened
 function setStatus(msg) {
   const el = document.getElementById("authStatus");
   if (el) el.textContent = msg;
@@ -6,8 +6,6 @@ function setStatus(msg) {
 
 // Wait until DOM exists before querying elements
 window.addEventListener("DOMContentLoaded", async () => {
-  setStatus("auth.js loaded ✅");
-
   // Fetch config from backend
   const cfgRes = await fetch("/config");
   const cfg = await cfgRes.json();
@@ -37,7 +35,14 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   async function refreshUI() {
     const { data } = await supabase.auth.getSession();
-    setUI(!!data.session);
+    const loggedIn = !!data.session;
+
+    setUI(loggedIn);
+
+    // If already logged in (e.g., after refresh), load sidebar chats
+    if (loggedIn) {
+      await window.refreshChats?.();
+    }
   }
 
   // LOGIN
@@ -57,6 +62,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     setStatus(error ? `Error: ${error.message}` : "Logged in ✅");
 
     await refreshUI();
+    await window.refreshChats?.();
   });
 
   // SIGNUP (Create account)
@@ -81,20 +87,19 @@ window.addEventListener("DOMContentLoaded", async () => {
   });
 
   // LOGOUT
-logoutBtn?.addEventListener("click", async () => {
-  const { error } = await supabase.auth.signOut();
-  if (error) {
-    console.log("Logout error:", error);
-    setStatus("Logout error: " + error.message);
-    return;
-  }
+  logoutBtn?.addEventListener("click", async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.log("Logout error:", error);
+      setStatus("Logout error: " + error.message);
+      return;
+    }
 
-  setStatus("Logged out ✅");
-  setUI(false);
+    setStatus("Logged out ✅");
+    setUI(false);
 
-  window.location.replace(true);
-});
-
+    window.location.replace(true);
+  });
 
   // Keep UI synced
   await refreshUI();
