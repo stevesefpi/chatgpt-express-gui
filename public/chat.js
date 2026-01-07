@@ -8,7 +8,13 @@ const newChatBtn = document.getElementById("newChatBtn");
 function addMessage(text, role) {
   const div = document.createElement("div");
   div.className = `message ${role}`;
-  div.textContent = text;
+
+  const html = window.DOMPurify.sanitize(
+    window.marked.parse(text)
+  );
+
+  div.innerHTML = html;
+
   messagesEl.appendChild(div);
   messagesEl.scrollTop = messagesEl.scrollHeight;
   return div;
