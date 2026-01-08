@@ -1,3 +1,5 @@
+import { addMessage, clearMessages } from "./utils/chat_utils.js";
+
 const chatForm = document.getElementById("chatForm");
 const promptEl = document.getElementById("prompt");
 const messagesEl = document.getElementById("messages");
@@ -5,26 +7,26 @@ const messagesEl = document.getElementById("messages");
 const chatListEl = document.getElementById("chatList");
 const newChatBtn = document.getElementById("newChatBtn");
 
-function addMessage(text, role) {
-  const div = document.createElement("div");
-  div.className = `message ${role}`;
-
-  const html = window.DOMPurify.sanitize(
-    window.marked.parse(text)
-  );
-
-  div.innerHTML = html;
-
-  messagesEl.appendChild(div);
-  messagesEl.scrollTop = messagesEl.scrollHeight;
-  return div;
-}
-
-function clearMessages() {
-  messagesEl.innerHTML = "";
-}
-
 let currentChatId = null;
+
+// function addMessage(text, role) {
+//   const div = document.createElement("div");
+//   div.className = `message ${role}`;
+
+//   const html = window.DOMPurify.sanitize(
+//     window.marked.parse(text)
+//   );
+
+//   div.innerHTML = html;
+
+//   messagesEl.appendChild(div);
+//   messagesEl.scrollTop = messagesEl.scrollHeight;
+//   return div;
+// }
+
+// function clearMessages() {
+//   messagesEl.innerHTML = "";
+// }
 
 function renderChatList(chats) {
   chatListEl.innerHTML = "";
@@ -72,10 +74,10 @@ async function loadMessages(chatId) {
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Failed to load messages");
 
-  clearMessages();
+  clearMessages(messagesEl);
 
   for (const m of data.messages || []) {
-    addMessage(m.content, m.role);
+    addMessage(messagesEl, m.content, m.role);
   }
 }
 
@@ -105,7 +107,7 @@ newChatBtn?.addEventListener("click", async () => {
 
     currentChatId = data.chatId;
 
-    clearMessages();
+    clearMessages(messagesEl);
     await loadChats();
   } catch (err) {
     console.error(err);
@@ -126,10 +128,10 @@ chatForm.addEventListener("submit", async (e) => {
   const text = promptEl.value.trim();
   if (!text) return;
 
-  addMessage(text, "user");
+  addMessage(messagesEl, text, "user");
   promptEl.value = "";
 
-  const assistantBubble = addMessage("Thinking...", "assistant");
+  const assistantBubble = addMessage(messagesEl, "Thinking...", "assistant");
 
   try {
     const token = await window.getAccessToken?.();
