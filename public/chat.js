@@ -1,4 +1,4 @@
-import { addMessage, clearMessages } from "./utils/chat_utils.js";
+import { addMessage, clearMessages, fetchChats, renderChatList, fetchMessages, renderMessages } from "./utils/chat_utils.js";
 
 const chatForm = document.getElementById("chatForm");
 const promptEl = document.getElementById("prompt");
@@ -9,82 +9,18 @@ const newChatBtn = document.getElementById("newChatBtn");
 
 let currentChatId = null;
 
-// function addMessage(text, role) {
-//   const div = document.createElement("div");
-//   div.className = `message ${role}`;
-
-//   const html = window.DOMPurify.sanitize(
-//     window.marked.parse(text)
-//   );
-
-//   div.innerHTML = html;
-
-//   messagesEl.appendChild(div);
-//   messagesEl.scrollTop = messagesEl.scrollHeight;
-//   return div;
-// }
-
-// function clearMessages() {
-//   messagesEl.innerHTML = "";
-// }
-
-function renderChatList(chats) {
-  chatListEl.innerHTML = "";
-
-  for (const chat of chats) {
-    const item = document.createElement("div");
-    item.className = "chat-item";
-    item.textContent = chat.title || "Untitled chat";
-    item.dataset.chatId = chat.id;
-
-    if (chat.id === currentChatId) {
-      item.classList.add("active");
-    }
-
-    item.addEventListener("click", async () => {
-      await selectChat(chat.id);
-    });
-
-    chatListEl.appendChild(item);
-  }
-}
-
-async function loadChats() {
-  const token = await window.getAccessToken?.();
-  if (!token) return;
-
-  const res = await fetch("/chats", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Failed to load chats");
-
-  renderChatList(data.chats || []);
-}
-
-async function loadMessages(chatId) {
-  const token = await window.getAccessToken?.();
-  if (!token) throw new Error("Session expired, please log in again");
-
-  const res = await fetch(`/chats/${chatId}/messages`, {
-    headers: { Authorization: `Bearer ${token} ` },
-  });
-
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Failed to load messages");
-
-  clearMessages(messagesEl);
-
-  for (const m of data.messages || []) {
-    addMessage(messagesEl, m.content, m.role);
-  }
+async function refreshChats() {
+  const chats = await fetchChats();
+  renderChatList(chatListEl, chats, currentChatId, selectChat);
 }
 
 async function selectChat(chatId) {
   currentChatId = chatId;
-  await loadMessages(chatId);
-  await loadChats();
+
+  const msgs = await fetchMessages(chatId);
+  renderMessages(messagesEl, msgs);
+
+  await refreshChats(); 
 }
 
 // Create a new chat when clicking the NEW button
@@ -108,7 +44,7 @@ newChatBtn?.addEventListener("click", async () => {
     currentChatId = data.chatId;
 
     clearMessages(messagesEl);
-    await loadChats();
+    await refreshChats();
   } catch (err) {
     console.error(err);
   }
@@ -116,7 +52,7 @@ newChatBtn?.addEventListener("click", async () => {
 
 window.addEventListener("DOMContentLoaded", async () => {
   try {
-    await loadChats();
+    await refreshChats();
   } catch (err) {
     console.err(err);
   }
@@ -156,7 +92,7 @@ chatForm.addEventListener("submit", async (e) => {
       }
 
       currentChatId = chatData.chatId;
-      await loadChats();
+      await refreshChats();
     }
 
     const response = await fetch("/chat", {
@@ -173,10 +109,10 @@ chatForm.addEventListener("submit", async (e) => {
     if (!response.ok) throw new Error(data.error || "Request failed");
 
     assistantBubble.textContent = data.reply || "(No reply returned)";
-    await loadChats();
+    await refreshChats();
   } catch (err) {
     assistantBubble.textContent = "Error: " + err.message;
   }
 });
 
-window.refreshChats = loadChats;
+window.refreshChats = refreshChats;
