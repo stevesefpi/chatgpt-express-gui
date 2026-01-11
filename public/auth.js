@@ -1,8 +1,4 @@
-// A helper to see something happened
-function setStatus(msg) {
-  const el = document.getElementById("authStatus");
-  if (el) el.textContent = msg;
-}
+import { setStatus, setUI, getAuthElements } from "./utils/auth_utils.js";
 
 // Wait until DOM exists before querying elements
 window.addEventListener("DOMContentLoaded", async () => {
@@ -22,22 +18,18 @@ window.addEventListener("DOMContentLoaded", async () => {
     return data.session?.access_token || null;
   };
 
+  const { authDiv, chatDiv, loginForm, signupBtn, logoutBtn } = getAuthElements();
   const authDiv = document.getElementById("auth");
   const chatDiv = document.getElementById("chat");
   const loginForm = document.getElementById("loginForm");
   const signupBtn = document.getElementById("signupBtn");
   const logoutBtn = document.getElementById("logoutBtn");
 
-  function setUI(loggedIn) {
-    authDiv.style.display = loggedIn ? "none" : "block";
-    chatDiv.style.display = loggedIn ? "flex" : "none";
-  }
-
   async function refreshUI() {
     const { data } = await supabase.auth.getSession();
     const loggedIn = !!data.session;
 
-    setUI(loggedIn);
+    setUI(authDiv, chatDiv, loggedIn);
 
     // If already logged in (e.g., after refresh), load sidebar chats
     if (loggedIn) {
@@ -96,7 +88,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
 
     setStatus("Logged out ✅");
-    setUI(false);
+    setUI(authDiv, chatDiv, false);
 
     window.location.replace(true);
   });
