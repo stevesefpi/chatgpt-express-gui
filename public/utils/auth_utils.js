@@ -17,3 +17,15 @@ export function getAuthElements() {
   const logoutBtn = document.getElementById("logoutBtn");
   return { authDiv, chatDiv, loginForm, signupBtn, logoutBtn };
 }
+
+export async function refreshUI({ supabase, authDiv, chatDiv, setUI }) {
+  const { data } = await supabase.auth.getSession();
+  const loggedIn = !!data.session;
+
+  setUI(authDiv, chatDiv, loggedIn);
+
+  // Refresh chat is user is already logged in
+  if (loggedIn) {
+    await window.refreshChats?.();
+  }
+}

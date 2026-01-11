@@ -1,4 +1,4 @@
-import { setStatus, setUI, getAuthElements } from "./utils/auth_utils.js";
+import { setStatus, setUI, getAuthElements, refreshUI } from "./utils/auth_utils.js";
 
 // Wait until DOM exists before querying elements
 window.addEventListener("DOMContentLoaded", async () => {
@@ -7,10 +7,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   const cfg = await cfgRes.json();
 
   // Create Supabase client
-  const supabase = window.supabase.createClient(
-    cfg.supabaseUrl,
-    cfg.supabaseAnonKey
-  );
+  const supabase = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
 
   // Expose token getter for chat.js
   window.getAccessToken = async function () {
@@ -18,24 +15,8 @@ window.addEventListener("DOMContentLoaded", async () => {
     return data.session?.access_token || null;
   };
 
-  const { authDiv, chatDiv, loginForm, signupBtn, logoutBtn } = getAuthElements();
-  const authDiv = document.getElementById("auth");
-  const chatDiv = document.getElementById("chat");
-  const loginForm = document.getElementById("loginForm");
-  const signupBtn = document.getElementById("signupBtn");
-  const logoutBtn = document.getElementById("logoutBtn");
-
-  async function refreshUI() {
-    const { data } = await supabase.auth.getSession();
-    const loggedIn = !!data.session;
-
-    setUI(authDiv, chatDiv, loggedIn);
-
-    // If already logged in (e.g., after refresh), load sidebar chats
-    if (loggedIn) {
-      await window.refreshChats?.();
-    }
-  }
+  const { authDiv, chatDiv, loginForm, signupBtn, logoutBtn } =
+    getAuthElements();
 
   // LOGIN
   loginForm?.addEventListener("submit", async (e) => {
@@ -53,11 +34,11 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     setStatus(error ? `Error: ${error.message}` : "Logged in ✅");
 
-    await refreshUI();
+    await refreshUI({ supabase, authDiv, chatDiv, setUI });
     await window.refreshChats?.();
   });
 
-  // SIGNUP (Create account)
+  // SIGNUP
   signupBtn?.addEventListener("click", async () => {
     setStatus("Create account clicked...");
 
@@ -94,6 +75,9 @@ window.addEventListener("DOMContentLoaded", async () => {
   });
 
   // Keep UI synced
-  await refreshUI();
-  supabase.auth.onAuthStateChange(() => refreshUI());
+  await refreshUI({ supabase, authDiv, chatDiv, setUI });
+
+  supabase.auth.onAuthStateChange(() =>
+    refreshUI({ supabase, authDiv, chatDiv, setUI })
+  );
 });
