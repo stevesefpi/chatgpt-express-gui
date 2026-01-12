@@ -10,6 +10,11 @@ export function addMessage(messagesEl, text, role) {
   return div;
 }
 
+export function setMessageHtml(el, text) {
+  const html = window.DOMPurify.sanitize(window.marked.parse(text || ""));
+  el.innerHTML = html;
+}
+
 export function clearMessages(messagesEl) {
   messagesEl.innerHTML = "";
 }

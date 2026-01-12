@@ -1,4 +1,4 @@
-import { addMessage, clearMessages, fetchChats, renderChatList, fetchMessages, renderMessages } from "./utils/chat_utils.js";
+import { addMessage, clearMessages, setMessageHtml, fetchChats, renderChatList, fetchMessages, renderMessages } from "./utils/chat_utils.js";
 
 const chatForm = document.getElementById("chatForm");
 const promptEl = document.getElementById("prompt");
@@ -33,7 +33,7 @@ newChatBtn?.addEventListener("click", async () => {
     const res = await fetch("/chats", {
       method: "POST",
       headers: {
-        "Content-Type": "application.json",
+        "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
     });
@@ -54,7 +54,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   try {
     await refreshChats();
   } catch (err) {
-    console.err(err);
+    console.error(err);
   }
 });
 
@@ -108,7 +108,7 @@ chatForm.addEventListener("submit", async (e) => {
 
     if (!response.ok) throw new Error(data.error || "Request failed");
 
-    assistantBubble.textContent = data.reply || "(No reply returned)";
+    setMessageHtml(assistantBubble, data.reply || "(No reply returned)");
     await refreshChats();
   } catch (err) {
     assistantBubble.textContent = "Error: " + err.message;
