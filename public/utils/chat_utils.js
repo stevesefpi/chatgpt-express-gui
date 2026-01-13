@@ -1,18 +1,54 @@
-export function addMessage(messagesEl, text, role) {
-  const div = document.createElement("div");
-  div.className = `message ${role}`;
+export function addMessage(messagesEl, text, role, date) {
 
-  const html = window.DOMPurify.sanitize(window.marked.parse(text));
-  div.innerHTML = html;
+  // Create a wrapper for message content (div) and timestamp (span)
+  const wrapper = document.createElement("div");
+  wrapper.className = `message ${role}`;
+  
+  const content = document.createElement("div");
+  content.className = "msg-content";
 
-  messagesEl.appendChild(div);
+  const timestamp = document.createElement("span");
+  timestamp.className = "timestamp";
+
+  const html = window.DOMPurify.sanitize(window.marked.parse(text || ""));
+  content.innerHTML = html;
+
+  // Change date into readable format
+
+  let timeText = "";
+
+  // If the date already looks like "hh:mm", no change is needed
+  if (typeof date === "string" && /^\d{2}:\d{2}$/.test(date)) {
+    timeText = date;
+  } else if (date) {
+    // Otherwise parse Supabase timestamp into the hh:mm format
+    const iso_format = String(date).replace(" ", "T");
+    const d = new Date(iso_format);
+
+    if (!Number.isNaN(d.getTime())) {
+      const hh = String(d.getHours()).padStart(2, "0");
+      const mm = String(d.getMinutes()).padStart(2, "0");
+      timeText = `${hh}:${mm}`;
+    }
+  }
+
+  timestamp.textContent = timeText;
+
+  wrapper.appendChild(content);
+  wrapper.appendChild(timestamp);
+
+  messagesEl.appendChild(wrapper);
   messagesEl.scrollTop = messagesEl.scrollHeight;
-  return div;
+
+  return wrapper;
 }
 
 export function setMessageHtml(el, text) {
+  const contentEl = el.querySelector(".msg-content");
+  if (!contentEl) return;
+
   const html = window.DOMPurify.sanitize(window.marked.parse(text || ""));
-  el.innerHTML = html;
+  contentEl.innerHTML = html;
 }
 
 export function clearMessages(messagesEl) {
@@ -64,6 +100,13 @@ export async function fetchMessages(chatId) {
 export function renderMessages(messagesEl, messages) {
   clearMessages(messagesEl);
   for (const m of messages) {
-    addMessage(messagesEl, m.content, m.role);
+    addMessage(messagesEl, m.content, m.role, m.created_at);
   }
+}
+
+export function getCurrentTime() {
+  const date = new Date();
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
 }

@@ -80,6 +80,7 @@ body {
 }
 
 .message {
+  position: relative;
   max-width: 720px;
   padding: 14px 16px;
   border-radius: 12px;
@@ -120,6 +121,16 @@ body {
 .message.assistant {
   align-self: flex-start;
   background: white;
+}
+
+.timestamp {
+  position: absolute;
+  bottom: 8px;
+  right: 10px;
+}
+
+.msg-content p {
+  margin: 0.4em 0;
 }
 
 #chatForm {

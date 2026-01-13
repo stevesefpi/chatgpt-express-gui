@@ -1,4 +1,4 @@
-import { addMessage, clearMessages, setMessageHtml, fetchChats, renderChatList, fetchMessages, renderMessages } from "./utils/chat_utils.js";
+import { addMessage, clearMessages, setMessageHtml, fetchChats, renderChatList, fetchMessages, renderMessages, getCurrentTime } from "./utils/chat_utils.js";
 
 const chatForm = document.getElementById("chatForm");
 const promptEl = document.getElementById("prompt");
@@ -64,10 +64,12 @@ chatForm.addEventListener("submit", async (e) => {
   const text = promptEl.value.trim();
   if (!text) return;
 
-  addMessage(messagesEl, text, "user");
+  const now = getCurrentTime();
+
+  addMessage(messagesEl, text, "user", now);
   promptEl.value = "";
 
-  const assistantBubble = addMessage(messagesEl, "Thinking...", "assistant");
+  const assistantBubble = addMessage(messagesEl, "Thinking...", "assistant", now);
 
   try {
     const token = await window.getAccessToken?.();
