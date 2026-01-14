@@ -78,15 +78,18 @@ window.addEventListener("DOMContentLoaded", async () => {
   });
 
   logoutBtn?.addEventListener("click", async () => {
+    setStatus("Logging out");
+
     const { error } = await supabase.auth.signOut();
     if (error) {
       setStatus("Logout error: " + error.message);
       return;
     }
 
-    setStatus("Logged out ✅");
-    setUI(authDiv, chatDiv, false);
-    window.location.reload();
+    cachedSession = null;
+    await refreshUI({ supabase, authDiv, chatDiv, setUI });
+
+    setStatus("Logged out.");
   });
 
   await refreshUI({ supabase, authDiv, chatDiv, setUI });

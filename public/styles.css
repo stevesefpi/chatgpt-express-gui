@@ -81,6 +81,7 @@ body {
 
 .message {
   position: relative;
+  min-width: 96px;
   max-width: 720px;
   padding: 14px 16px;
   border-radius: 12px;
