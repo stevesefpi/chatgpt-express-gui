@@ -1,4 +1,21 @@
-import { addMessage, clearMessages, setMessageHtml, fetchChats, renderChatList, fetchMessages, renderMessages, getCurrentTime } from "./utils/chat_utils.js";
+import {
+  addMessage,
+  clearMessages,
+  setMessageHtml,
+  fetchChats,
+  renderChatList,
+  fetchMessages,
+  renderMessages,
+  getCurrentTime,
+} from "./utils/chat_utils.js";
+
+window.addEventListener("error", (e) => {
+  console.error("GLOBAL ERROR:", e.message, e.error);
+});
+
+window.addEventListener("unhandledrejection", (e) => {
+  console.error("UNHANDLED PROMISE REJECTION:", e.reason);
+});
 
 const chatForm = document.getElementById("chatForm");
 const promptEl = document.getElementById("prompt");
@@ -20,15 +37,16 @@ async function selectChat(chatId) {
   const msgs = await fetchMessages(chatId);
   renderMessages(messagesEl, msgs);
 
-  await refreshChats(); 
+  await refreshChats();
 }
 
 // Create a new chat when clicking the NEW button
 
 newChatBtn?.addEventListener("click", async () => {
   try {
+    console.log("[chat] getting token...");
     const token = await window.getAccessToken?.();
-    if (!token) return;
+    console.log("[chat] token:", token ? token.slice(0, 20) + "..." : token);
 
     const res = await fetch("/chats", {
       method: "POST",
@@ -50,14 +68,6 @@ newChatBtn?.addEventListener("click", async () => {
   }
 });
 
-window.addEventListener("DOMContentLoaded", async () => {
-  try {
-    await refreshChats();
-  } catch (err) {
-    console.error(err);
-  }
-});
-
 chatForm.addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -69,10 +79,18 @@ chatForm.addEventListener("submit", async (e) => {
   addMessage(messagesEl, text, "user", now);
   promptEl.value = "";
 
-  const assistantBubble = addMessage(messagesEl, "Thinking...", "assistant", now);
+  const assistantBubble = addMessage(
+    messagesEl,
+    "Thinking...",
+    "assistant",
+    now
+  );
 
   try {
+    console.log("[chat] getting token...");
     const token = await window.getAccessToken?.();
+    console.log("[chat] token:", token ? token.slice(0, 20) + "..." : token);
+
     if (!token) {
       assistantBubble.textContent = "Session expired, please log in again.";
       return;

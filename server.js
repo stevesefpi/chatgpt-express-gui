@@ -46,6 +46,10 @@ app.get("/chats", requireAuth, async (req, res) => {
       process.env.SUPABASE_ANON_KEY,
       {
         global: { headers: { Authorization: `Bearer ${token}` } },
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+        },
       }
     );
 
@@ -86,6 +90,10 @@ app.post("/chats", requireAuth, async (req, res) => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+        },
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
         },
       }
     );
@@ -162,20 +170,20 @@ app.post("/chat", requireAuth, async (req, res) => {
       .eq("id", chatId)
       .single();
 
-      if (!chatErr && chatRow?.title === "New chat") {
-        try {
-          const title = await generateChatTitle(client, message);
+    if (!chatErr && chatRow?.title === "New chat") {
+      try {
+        const title = await generateChatTitle(client, message);
 
-          const { error: updateErr } = await supabaseUser
+        const { error: updateErr } = await supabaseUser
           .from("chats")
           .update({ title })
           .eq("id", chatId);
 
-          if (updateErr) console.error("Title update error:", updateErr);
-        } catch (e) {
-          console.error("title generation error: ", e);
-        }
-      } 
+        if (updateErr) console.error("Title update error:", updateErr);
+      } catch (e) {
+        console.error("title generation error: ", e);
+      }
+    }
 
     // Getting message history from the database
     const { data: history, error: historyErr } = await supabaseUser
@@ -246,6 +254,10 @@ app.get("/chats/:chatId/messages", requireAuth, async (req, res) => {
       process.env.SUPABASE_ANON_KEY,
       {
         global: { headers: { Authorization: `Bearer ${token}` } },
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+        },
       }
     );
 
