@@ -18,13 +18,12 @@ export function getAuthElements() {
   return { authDiv, chatDiv, loginForm, signupBtn, logoutBtn };
 }
 
-export async function refreshUI({ supabase, authDiv, chatDiv, setUI }) {
-  const { data } = await supabase.auth.getSession();
-  const loggedIn = !!data.session;
+export async function refreshUI({ session, authDiv, chatDiv, setUI }) {
+  const loggedIn = !!session;
 
   setUI(authDiv, chatDiv, loggedIn);
 
-  // Refresh chat is user is already logged in
+  // Refresh chat if the user is already logged in
   if (loggedIn) {
     await window.refreshChats?.();
   }

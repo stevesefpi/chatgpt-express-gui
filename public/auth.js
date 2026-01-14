@@ -1,53 +1,44 @@
-import {
-  setStatus,
-  setUI,
-  getAuthElements,
-  refreshUI,
-} from "./utils/auth_utils.js";
+import { setStatus, setUI, getAuthElements, refreshUI } from "./utils/auth_utils.js";
 
-// Wait until DOM exists before querying elements
 window.addEventListener("DOMContentLoaded", async () => {
-  // Fetch config from backend
   const cfgRes = await fetch("/config");
   const cfg = await cfgRes.json();
 
-  let supabase = null;
-  let cachedSession = null;
-
-  // Function to create Supabase client
-  const createSb = () =>
-    window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-      },
-    });
-
-  const initSupabase = async () => {
-    supabase = createSb();
-
-    // cache
-    const { data } = await supabase.auth.getSession();
-    cachedSession = data.session ?? null;
-
-    // keep cache updated
-    supabase.auth.onAuthStateChange((_event, session) => {
-      cachedSession = session ?? null;
-    });
-
-    // expose a token getter that DOES NOT call getSession()
-    window.getAccessToken = async () => cachedSession?.access_token ?? null;
-
-    // (optional) expose for debugging
-    window.sb = supabase;
-  };
-
-  await initSupabase();
-
-  // ---- your existing UI wiring below, but use `supabase` variable ----
+  // Getting DOM elements via the imported helper function
   const { authDiv, chatDiv, loginForm, signupBtn, logoutBtn } = getAuthElements();
 
+  let cachedSession = null;
+
+  const supabase = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+  });
+
+  // Prime cache once
+  {
+    const { data } = await supabase.auth.getSession();
+    cachedSession = data.session ?? null;
+  }
+
+  // Keep cache + UI synced
+  supabase.auth.onAuthStateChange((_event, session) => {
+    cachedSession = session ?? null;
+    refreshUI({ session: cachedSession, authDiv, chatDiv, setUI });
+  });
+
+  // Token getter (no getSession calls)
+  window.getAccessToken = async () => cachedSession?.access_token ?? null;
+
+  // Optional debugging
+  window.sb = supabase;
+
+  // Initial UI render
+  await refreshUI({ session: cachedSession, authDiv, chatDiv, setUI });
+
+  // LOGIN
   loginForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
     setStatus("Logging in...");
@@ -58,10 +49,10 @@ window.addEventListener("DOMContentLoaded", async () => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setStatus(error ? `Error: ${error.message}` : "Logged in ✅");
 
-    await refreshUI({ supabase, authDiv, chatDiv, setUI });
-    await window.refreshChats?.();
+    // No need to call refreshUI here; onAuthStateChange will fire.
   });
 
+  // SIGNUP
   signupBtn?.addEventListener("click", async () => {
     setStatus("Create account clicked...");
 
@@ -77,8 +68,9 @@ window.addEventListener("DOMContentLoaded", async () => {
     setStatus(error ? `Error: ${error.message}` : "Account created ✅");
   });
 
+  // LOGOUT
   logoutBtn?.addEventListener("click", async () => {
-    setStatus("Logging out");
+    setStatus("Logging out...");
 
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -86,15 +78,8 @@ window.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    cachedSession = null;
-    await refreshUI({ supabase, authDiv, chatDiv, setUI });
-
-    setStatus("Logged out.");
+    // onAuthStateChange will fire and refreshUI will flip the UI
+    setStatus("Logged out ✅");
   });
-
-  await refreshUI({ supabase, authDiv, chatDiv, setUI });
-
-  supabase.auth.onAuthStateChange(() =>
-    refreshUI({ supabase, authDiv, chatDiv, setUI })
-  );
 });
+
