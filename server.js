@@ -9,6 +9,11 @@ import { generateChatTitle } from "./utils/utils.js";
 
 dotenv.config();
 
+const supabaseDb = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+);
+
 const app = express();
 app.use(cors());
 app.use(express.json());
