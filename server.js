@@ -206,13 +206,28 @@ app.post("/chat", requireAuth, async (req, res) => {
     // Calling OpenAI with context
     const response = await client.responses.create({
       model: "gpt-5.2",
-      tools: [{ type: "web_search" }],
+      tools: [{ type: "web_search" }, { type: "image_generation" }],
       input: inputMessages,
     });
 
-    console.log(response);
+    const imageCall = (response.output || []).find(
+      (o) => o.type === "image_generation_call"
+    );
+    const imageBase64 = imageCall?.result || null;
 
     const assistantText = response.output_text || "";
+    let assistantContentToStore = assistantText;
+
+    if (imageBase64) {
+      assistantContentToStore = JSON.stringify({
+        type: "image",
+        mime: "image/png",
+        b64: imageBase64,
+        caption: assistantText || "",
+      });
+    }
+
+    console.log(response);
 
     // Saving the assistant reply into the database
     const { error: assistantInsertError } = await supabaseUser
@@ -227,6 +242,15 @@ app.post("/chat", requireAuth, async (req, res) => {
     if (assistantInsertError) {
       console.error("Assistant message insert error:", assistantInsertError);
       return res.status(500).json({ error: "Failed to save assistant reply" });
+    }
+
+    if (imageBase64) {
+      return res.json({
+        type: "image",
+        mime: "image/png",
+        b64: imageBase64,
+        caption: assistantText || "",
+      });
     }
 
     res.json({ reply: assistantText });

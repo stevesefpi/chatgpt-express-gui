@@ -105,13 +105,16 @@ export function renderMessages(messagesEl, messages) {
 
     // Detect stored JSON image payload
     if (typeof content === "string" && content.startsWith("{")) {
-      const obj = JSON.parse(content);
+
+      try {const obj = JSON.parse(content);
       if (obj?.type === "image" && obj?.b64) {
         // render as image
         const wrapper = addMessage(messagesEl, "", message.role, message.created_at);
         const contentEl = wrapper.querySelector(".msg-content");
         contentEl.innerHTML = `<img class="chat-image" src="data:${obj.mime};base64,${obj.b64}" />`;
         continue;
+      }} catch (err) {
+        if (err) throw new Error(err);
       }
     } 
     addMessage(messagesEl, content, message.role, message.created_at);
