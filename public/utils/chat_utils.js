@@ -1,9 +1,8 @@
 export function addMessage(messagesEl, text, role, date) {
-
   // Create a wrapper for message content (div) and timestamp (span)
   const wrapper = document.createElement("div");
   wrapper.className = `message ${role}`;
-  
+
   const content = document.createElement("div");
   content.className = "msg-content";
 
@@ -99,24 +98,48 @@ export async function fetchMessages(chatId) {
 
 export function renderMessages(messagesEl, messages) {
   clearMessages(messagesEl);
+
   for (const message of messages) {
+    const content = message.content;
 
-    let content = message.content;
+    // Detect stored JSON payload (image)
+    if (typeof content === "string") {
+      const s = content.trim();
+      if (s.startsWith("{")) {
+        try {
+          const obj = JSON.parse(s);
 
-    // Detect stored JSON image payload
-    if (typeof content === "string" && content.startsWith("{")) {
+          // ✅ NEW: render by URL (no base64)
+          if (obj?.type === "image" && obj?.url) {
+            const wrapper = addMessage(
+              messagesEl,
+              "",
+              message.role,
+              message.created_at
+            );
+            const contentEl = wrapper.querySelector(".msg-content");
 
-      try {const obj = JSON.parse(content);
-      if (obj?.type === "image" && obj?.b64) {
-        // render as image
-        const wrapper = addMessage(messagesEl, "", message.role, message.created_at);
-        const contentEl = wrapper.querySelector(".msg-content");
-        contentEl.innerHTML = `<img class="chat-image" src="data:${obj.mime};base64,${obj.b64}" />`;
-        continue;
-      }} catch (err) {
-        if (err) throw new Error(err);
+            const captionHtml = obj.caption
+              ? window.DOMPurify.sanitize(window.marked.parse(obj.caption))
+              : "";
+
+            contentEl.innerHTML = `
+              <img class="chat-image" src="${obj.url}" alt="Generated image" />
+              ${
+                captionHtml
+                  ? `<div class="img-caption">${captionHtml}</div>`
+                  : ""
+              }
+            `;
+            continue;
+          }
+        } catch (err) {
+          console.log(err);
+        }
       }
-    } 
+    }
+
+    // Normal text message
     addMessage(messagesEl, content, message.role, message.created_at);
   }
 }

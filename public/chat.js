@@ -129,9 +129,8 @@ chatForm.addEventListener("submit", async (e) => {
     if (!response.ok) throw new Error(data.error || "Request failed");
 
     if (data.type === "image") {
-      const src = `data:${data.mime || "image/png"};base64,${data.b64}`;
       const contentEl = assistantBubble.querySelector(".msg-content");
-      contentEl.innerHTML = `<img class="chat-image" src="${src}" alt="Generated image" />`;
+      contentEl.innerHTML = `<img class="chat-image" src="${data.url}" alt="Generated image" />`;
     } else {
       setMessageHtml(assistantBubble, data.reply || "(No reply returned)");
     }

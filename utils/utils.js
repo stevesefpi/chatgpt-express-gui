@@ -13,3 +13,12 @@ export async function generateChatTitle(openaiClient, firstUserMessage) {
 
     return (response.output_text || "New chat").trim();
 } 
+
+export function base64ToBuffer(b64) {
+    return Buffer.from(b64, "base64");
+}
+
+export function makeFileName(userId, crypto) {
+    const id = crypto.randomUUID();
+    return `${userId}/${Date.now()}-${id}.png`;
+}

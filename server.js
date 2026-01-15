@@ -1,11 +1,16 @@
 import { createClient } from "@supabase/supabase-js";
 import express from "express";
+import crypto from "crypto";
 import cors from "cors";
 import dotenv from "dotenv";
 import OpenAI from "openai";
 
 import { requireAuth } from "./middleware/requireAuth.js";
-import { generateChatTitle } from "./utils/utils.js";
+import {
+  generateChatTitle,
+  base64ToBuffer,
+  makeFileName,
+} from "./utils/utils.js";
 
 dotenv.config();
 
@@ -198,10 +203,16 @@ app.post("/chat", requireAuth, async (req, res) => {
     }
 
     // Conversion of database rows into format expected by openAI
-    const inputMessages = history.map((m) => ({
-      role: m.role,
-      content: m.content,
-    }));
+    const inputMessages = history.map((m) => {
+      const s = String(m.content || "").trim();
+      if (s.startsWith("{")) {
+        try {
+          const obj = JSON.parse(s);
+          if (obj.type === "image") return { role: m.role, content: "[Image]" };
+        } catch {}
+      }
+      return { role: m.role, content: m.content };
+    });
 
     // Calling OpenAI with context
     const response = await client.responses.create({
@@ -216,20 +227,54 @@ app.post("/chat", requireAuth, async (req, res) => {
     const imageBase64 = imageCall?.result || null;
 
     const assistantText = response.output_text || "";
-    let assistantContentToStore = assistantText;
 
     if (imageBase64) {
-      assistantContentToStore = JSON.stringify({
+      const bytes = base64ToBuffer(imageBase64);
+      const path = makeFileName(req.user.id, crypto);
+
+      const { data: uploadData, error: uploadErr } = await supabaseUser.storage
+        .from("chat-images")
+        .upload(path, bytes, {
+          contentType: "image/png",
+          upsert: false,
+        });
+
+      if (uploadErr) {
+        console.error("Storage upload error:", uploadErr);
+        return res.status(500).json({ error: "Failed to upload image" });
+      }
+
+      // Get public URL
+      const { data: pub } = supabaseUser.storage
+        .from("chat-images")
+        .getPublicUrl(uploadData.path);
+
+      const imageUrl = pub.publicUrl;
+
+      const payload = {
         type: "image",
-        mime: "image/png",
-        b64: imageBase64,
+        url: imageUrl,
+        caption: assistantText || "",
+      };
+
+      await supabaseUser.from("messages").insert({
+        chat_id: chatId,
+        user_id: req.user.id,
+        role: "assistant",
+        content: JSON.stringify(payload),
+      });
+
+      // Return URL to browser
+      return res.json({
+        type: "image",
+        url: imageUrl,
         caption: assistantText || "",
       });
     }
 
     console.log(response);
 
-    // Saving the assistant reply into the database
+    // Saving the assistant TEXT reply into the database
     const { error: assistantInsertError } = await supabaseUser
       .from("messages")
       .insert({
@@ -244,16 +289,7 @@ app.post("/chat", requireAuth, async (req, res) => {
       return res.status(500).json({ error: "Failed to save assistant reply" });
     }
 
-    if (imageBase64) {
-      return res.json({
-        type: "image",
-        mime: "image/png",
-        b64: imageBase64,
-        caption: assistantText || "",
-      });
-    }
-
-    res.json({ reply: assistantText });
+    return res.json({ type: "text", reply: assistantText });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "OpenAI request failed" });
