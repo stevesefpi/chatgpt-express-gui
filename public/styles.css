@@ -218,6 +218,10 @@ button:hover {
   background: rgba(255, 255, 255, 0.06);
 }
 
+.chat-image {
+  max-width: 500px;
+}
+
 .chat-item:hover {
   background: rgba(255, 255, 255, 0.12);
 }

@@ -11,13 +11,11 @@ import {
   base64ToBuffer,
   makeFileName,
 } from "./utils/utils.js";
+import { measureMemory } from "vm";
+
+const MESSAGES_LIMIT = 10;
 
 dotenv.config();
-
-const supabaseDb = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
 
 const app = express();
 app.use(cors());
@@ -55,7 +53,7 @@ app.get("/chats", requireAuth, async (req, res) => {
           persistSession: true,
           autoRefreshToken: true,
         },
-      }
+      },
     );
 
     const { data, error } = await supabaseUser
@@ -100,7 +98,7 @@ app.post("/chats", requireAuth, async (req, res) => {
           persistSession: true,
           autoRefreshToken: true,
         },
-      }
+      },
     );
 
     const { data, error } = await supabaseUser
@@ -150,7 +148,7 @@ app.post("/chat", requireAuth, async (req, res) => {
         global: {
           headers: { Authorization: `Bearer ${token}` },
         },
-      }
+      },
     );
 
     // Saving user message into the database
@@ -190,29 +188,64 @@ app.post("/chat", requireAuth, async (req, res) => {
       }
     }
 
-    // Getting message history from the database
-    const { data: history, error: historyErr } = await supabaseUser
+    // Load chat summary
+    const { data: chatSummary, error: chatSummaryError } = await supabaseUser
+      .from("chats")
+      .select("summary")
+      .eq("id", chatId)
+      .single();
+
+    if (chatSummaryError) {
+      console.error("Error loading chat summary: ", chatSummaryError);
+      return res.status(500).json({ error: "Failed to load chat meta" });
+    }
+    // Getting message history from the database,
+    // but only the last 5 user messages and 5 assistant messages
+    const { data: recentHistory, error: recentHistoryErr } = await supabaseUser
       .from("messages")
       .select("role, content, created_at")
       .eq("chat_id", chatId)
-      .order("created_at", { ascending: true });
+      .order("created_at", { ascending: false })
+      .limit(MESSAGES_LIMIT);
 
-    if (historyErr) {
-      console.error("History load error:", historyErr);
+    if (recentHistoryErr) {
+      console.error("History load error:", recentHistoryErr);
       return res.status(500).json({ error: "Failed to load chat history" });
     }
 
-    // Conversion of database rows into format expected by openAI
-    const inputMessages = history.map((m) => {
-      const s = String(m.content || "").trim();
-      if (s.startsWith("{")) {
+    recentHistory.reverse();
+
+    const inputMessages = [
+      {
+        role: "system",
+        content:
+          "You are a helpful assistant. Use the conversation summary as background context. If it conflicts with the latest messages, prefer the latest messages.",
+      },
+    ];
+
+    const summaryText = String(chatSummary?.summary || "").trim();
+    if (summaryText) {
+      inputMessages.push({
+        role: "system",
+        content: `Conversation summary:\n${summaryText}`,
+      });
+    }
+
+    // Convert DB rows into OpenAI format 
+    for (const message of recentHistory) {
+      const stringifiedMessage = String(message.content || "").trim();
+      if (stringifiedMessage.startsWith("{")) {
         try {
-          const obj = JSON.parse(s);
-          if (obj.type === "image") return { role: m.role, content: "[Image]" };
+          const obj = JSON.parse(stringifiedMessage);
+          if (obj.type === "image") {
+            inputMessages.push({ role: message.role, content: "[Image]" });
+            continue;
+          }
         } catch {}
       }
-      return { role: m.role, content: m.content };
-    });
+
+      inputMessages.push({ role: message.role, content: message.content });
+    }
 
     // Calling OpenAI with context
     const response = await client.responses.create({
@@ -222,7 +255,7 @@ app.post("/chat", requireAuth, async (req, res) => {
     });
 
     const imageCall = (response.output || []).find(
-      (o) => o.type === "image_generation_call"
+      (o) => o.type === "image_generation_call",
     );
     const imageBase64 = imageCall?.result || null;
 
@@ -318,7 +351,7 @@ app.get("/chats/:chatId/messages", requireAuth, async (req, res) => {
           persistSession: true,
           autoRefreshToken: true,
         },
-      }
+      },
     );
 
     const { data, error } = await supabaseUser
