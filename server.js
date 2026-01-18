@@ -10,10 +10,12 @@ import {
   generateChatTitle,
   base64ToBuffer,
   makeFileName,
+  updateChatSummary,
 } from "./utils/utils.js";
-import { measureMemory } from "vm";
 
 const MESSAGES_LIMIT = 10;
+const SUMMARY_MODEL = "gpt-4.1-nano";
+const SUMMARY_MAX_TOKENS = 500;
 
 dotenv.config();
 
@@ -231,7 +233,7 @@ app.post("/chat", requireAuth, async (req, res) => {
       });
     }
 
-    // Convert DB rows into OpenAI format 
+    // Convert DB rows into OpenAI format
     for (const message of recentHistory) {
       const stringifiedMessage = String(message.content || "").trim();
       if (stringifiedMessage.startsWith("{")) {
@@ -321,6 +323,16 @@ app.post("/chat", requireAuth, async (req, res) => {
       console.error("Assistant message insert error:", assistantInsertError);
       return res.status(500).json({ error: "Failed to save assistant reply" });
     }
+
+    // Update chat summary (runs only every N messages)
+    updateChatSummary({
+      supabaseUser,
+      openai: client,
+      chatId,
+      messages_limit: MESSAGES_LIMIT, 
+      model: SUMMARY_MODEL,
+      maxTokens: SUMMARY_MAX_TOKENS,
+    }).catch((e) => console.error("Summary job failed:", e));
 
     return res.json({ type: "text", reply: assistantText });
   } catch (err) {
