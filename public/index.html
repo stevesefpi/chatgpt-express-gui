@@ -46,6 +46,34 @@
 
         <!-- MAIN CHAT AREA -->
         <main id="main">
+
+          <!-- Area where user selects GPT model -->
+          <div id="topbar">
+            <div class="model-selector" id="model-selector">
+              <button id="modelButton" type="button" aria-haspopup="true" aria-expanded="false">
+                <span id="modelLabel">GPT-5.2</span>
+                <span class="chev">▾</span>
+              </button>
+              <div class="model-menu" id="model-menu" role="menu" aria-hidden="true">
+                <button class="model-item" type="button" data-model="gpt-5.2" role="menuitem">
+                  GPT-5.2 
+                  <span class="hint">Plus model</span>
+                </button>
+
+                <button class="model-item" type="button" data-model="gpt-4.1" role="menuitem">
+                  GPT-4.1 
+                  <span class="hint">Older plus model</span>
+                </button>
+
+                <button class="model-item" type="button" data-model="gpt-4.1-mini" role="menuitem">
+                  GPT-4.1 Mini 
+                  <span class="hint">Cheaper and fast model</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Area where messages are loaded -->
           <div id="messages"></div>
 
           <form id="chatForm">

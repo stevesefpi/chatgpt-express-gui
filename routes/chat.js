@@ -16,10 +16,12 @@ const router = express.Router();
 const MESSAGES_LIMIT = 10;
 const SUMMARY_MODEL = "gpt-4.1-nano";
 const SUMMARY_MAX_TOKENS = 500;
+const ALLOWED_MODELS = new Set(["gpt-5.2", "gpt-4.1", "gpt-4.1-mini"]);
+
 
 router.post("/chat", requireAuth, async (req, res) => {
   try {
-    const { message, chatId } = req.body;
+    const { message, chatId, model } = req.body;
 
     if (!message) {
       return res.status(400).json({ error: "A prompt message is required." });
@@ -140,9 +142,11 @@ router.post("/chat", requireAuth, async (req, res) => {
       inputMessages.push({ role: message.role, content: message.content });
     }
 
+    // User-chosen model
+    const chosenModel = ALLOWED_MODELS.has(model) ? model : "gpt-5.2";
     // Calling OpenAI with context
     const response = await openai.responses.create({
-      model: "gpt-5.2",
+      model: chosenModel,
       tools: [{ type: "web_search" }, { type: "image_generation" }],
       input: inputMessages,
     });

@@ -249,6 +249,88 @@ button:hover {
   background: #f7f7f8;
 }
 
+#topbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: #f7f7f8;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.model-selector {
+  position: relative;
+  display: inline-block;
+}
+
+#modelButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: white;
+  color: #0f172a;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+}
+
+#modelButton:hover {
+  background: #f9fafb;
+}
+
+#modelButton .chev {
+  opacity: 0.7;
+}
+
+/* Dropdown menu */
+.model-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 220px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  padding: 6px;
+  display: none;
+}
+
+.model-menu.open {
+  display: block;
+}
+
+.model-item {
+  width: 100%;
+  text-align: left;
+  padding: 10px 10px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: #0f172a;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.model-item:hover {
+  background: #f3f4f6;
+}
+
+.model-item.active {
+  background: #eef2ff;
+}
+
+.model-item .hint {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
 /* Code blocks */
 pre {
   background: #0b1020;
