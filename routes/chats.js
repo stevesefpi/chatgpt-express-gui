@@ -63,4 +63,42 @@ router.post("/chats", requireAuth, async (req, res) => {
   }
 });
 
+router.delete("/chats", requireAuth, async (req, res) => {
+  try {
+    const { chatId } = req.params;
+
+    const supabaseUser = createSupabaseUserClient(req.token);
+    if (!supabaseUser) {
+      return res.status(401).json({ error: "Invalid authorization token." });
+    }
+
+    // Delete messages row
+    const { error: messagesErr } = await supabaseUser
+      .from("messages")
+      .delete()
+      .eq("chat_id", chatId);
+
+      if (messagesErr) {
+        console.error("Messages deletion error: ", messagesError);
+        return res.status(500).json({ error: "Failed to delete messages"});
+      }
+
+      // Delete the chat row
+      const { error: chatError } = await supabaseUser
+        .from("chats")
+        .delete()
+        .eq("id", chatId);
+
+        if (chatError) {
+          console.error("Chat deletion error: ", chatError);
+          return res.status(500).json({ error: "Failed to delete chat" });
+        }
+
+        res.json({ success: true, message: "Chat deleted succesfully" });
+  } catch (err) {
+    console.error("Delete chat route error: ", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 export default router;
