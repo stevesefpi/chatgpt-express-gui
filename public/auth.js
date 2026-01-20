@@ -4,6 +4,8 @@ window.addEventListener("DOMContentLoaded", async () => {
   const cfgRes = await fetch("/config");
   const cfg = await cfgRes.json();
 
+  console.log(cfg);
+
   // Getting DOM elements via the imported helper function
   const { authDiv, chatDiv, loginForm, signupBtn, logoutBtn } = getAuthElements();
 

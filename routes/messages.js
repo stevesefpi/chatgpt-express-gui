@@ -8,16 +8,7 @@ router.get("/chats/:chatId/messages", requireAuth, async (req, res) => {
   try {
     const { chatId } = req.params;
 
-    const authHeader = req.headers.authorization || "";
-    const token = authHeader.startsWith("Bearer ")
-      ? authHeader.slice("Bearer ".length)
-      : null;
-
-    if (!token) {
-      return res.status(401).json({ error: "Missing Authorization token" });
-    }
-
-    const supabaseUser = createSupabaseUserClient(token);
+    const supabaseUser = createSupabaseUserClient(req.token);
     if (!supabaseUser) {
       return res.status(401).json({ error: "Invalid authorization token." });
     }

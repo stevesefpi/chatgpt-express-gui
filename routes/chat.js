@@ -31,17 +31,7 @@ router.post("/chat", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "chatId is required." });
     }
 
-    // Get bearer token
-    const authHeader = req.headers.authorization || "";
-    const token = authHeader.startsWith("Bearer ")
-      ? authHeader.slice("Bearer ".length)
-      : null;
-
-    if (!token) {
-      return res.status(401).json({ error: "Missing authorization token." });
-    }
-
-    const supabaseUser = createSupabaseUserClient(token);
+    const supabaseUser = createSupabaseUserClient(req.token);
     if (!supabaseUser) {
         return res.status(401).json({ error: "Invalid authorization token." });
     }

@@ -35,7 +35,9 @@ export async function requireAuth(req, res, next) {
     if (error || !data?.user) {
       return res.status(401).json({ error: "Invalid or expired token" });
     }
+
     req.user = data.user;
+    req.token = token;
     next();
   } catch (err) {
     res.status(500).json({ error: "Auth check failed" });
