@@ -7,6 +7,7 @@ import {
   fetchMessages,
   renderMessages,
   getCurrentTime,
+  initializeModelMenu,
 } from "./utils/chat_utils.js";
 
 window.addEventListener("error", (e) => {
@@ -27,60 +28,7 @@ const newChatBtn = document.getElementById("newChatBtn");
 let currentChatId = null;
 let selectedModel = localStorage.getItem("selectedModel") || "gpt-5.2";
 
-function setSelectedModel(model) {
-  selectedModel = model;
-  localStorage.setItem("selectedModel", model);
-
-  const label = document.getElementById("modelLabel");
-  if (label) label.textContent = model.toUpperCase().replace("GPT-", "GPT-");
-
-  const items = document.querySelectorAll(".model-item");
-  items.forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.model === model);
-  });
-}
-
-function initializeModelMenu() {
-  const modelButton = document.getElementById("modelButton");
-  const menu = document.getElementById("model-menu");
-
-  if (!modelButton || !menu) return;
-
-  setSelectedModel(selectedModel);
-
-  function openMenu() {
-    menu.classList.add("open");
-    modelButton.setAttribute("aria-expanded", "true");
-    menu.setAttribute("aria-hidden", "false");
-  }
-
-  function closeMenu() {
-    menu.classList.remove("open");
-    modelButton.setAttribute("aria-expanded", "false");
-    menu.setAttribute("aria-hidden", "true");
-  }
-
-  modelButton.addEventListener("click", (event) => {
-    event.stopPropagation();
-    if (menu.classList.contains("open")) closeMenu();
-    else openMenu();
-  });
-
-  menu.addEventListener("click", (event) => {
-    const item = event.target.closest(".model-item");
-    if (!item) return;
-    setSelectedModel(item.dataset.model);
-    closeMenu();
-  });
-
-  document.addEventListener("click", () => closeMenu());
-
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") closeMenu();
-  })
-}
-
-initializeModelMenu();
+initializeModelMenu(selectedModel);
 
 async function refreshChats() {
   const chats = await fetchChats();
@@ -177,7 +125,11 @@ chatForm.addEventListener("submit", async (e) => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ message: text, chatId: currentChatId, model: selectedModel }),
+      body: JSON.stringify({
+        message: text,
+        chatId: currentChatId,
+        model: localStorage.getItem("selectedModel") || "gpt-5.2",
+      }),
     });
 
     const data = await response.json();
