@@ -4,6 +4,8 @@ dotenv.config();
 import express from "express";
 import cors from "cors";
 
+import { limiter } from "./utils/limiter.js";
+
 import chatRouter from "./routes/chat.js";
 import chatsRouter from "./routes/chats.js";
 import messagesRouter from "./routes/messages.js";
@@ -12,6 +14,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
+
+app.use(limiter);
 
 app.get("/config", (req, res) => {
   res.json({

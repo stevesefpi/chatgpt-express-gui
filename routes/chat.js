@@ -23,11 +23,11 @@ router.post("/chat", requireAuth, async (req, res) => {
   try {
     const { message, chatId, model } = req.body;
 
-    if (!message) {
+    if (!message || typeof message !== 'string') {
       return res.status(400).json({ error: "A prompt message is required." });
     }
 
-    if (!chatId) {
+    if (!chatId || typeof chatId !== 'string') {
       return res.status(400).json({ error: "chatId is required." });
     }
 
@@ -82,7 +82,7 @@ router.post("/chat", requireAuth, async (req, res) => {
 
     if (chatSummaryError) {
       console.error("Error loading chat summary: ", chatSummaryError);
-      return res.status(500).json({ error: "Failed to load chat meta" });
+      return res.status(500).json({ error: "Failed to load chat summary" });
     }
     // Getting message history from the database,
     // but only the last 5 user messages and 5 assistant messages
