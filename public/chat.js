@@ -8,6 +8,8 @@ import {
   renderMessages,
   getCurrentTime,
   initializeModelMenu,
+  deleteChat,
+  openDeleteModal
 } from "./utils/chat_utils.js";
 
 window.addEventListener("error", (e) => {
@@ -32,7 +34,7 @@ initializeModelMenu(selectedModel);
 
 async function refreshChats() {
   const chats = await fetchChats();
-  renderChatList(chatListEl, chats, currentChatId, selectChat);
+  renderChatList(chatListEl, chats, currentChatId, selectChat, handleDeleteChat);
 }
 
 async function selectChat(chatId) {
@@ -42,6 +44,24 @@ async function selectChat(chatId) {
   renderMessages(messagesEl, msgs);
 
   await refreshChats();
+}
+
+function handleDeleteChat(chatId) {
+  openDeleteModal(async () => {
+    try {
+      await deleteChat(chatId);
+
+      if (currentChatId === chatId) {
+        currentChatId = null;
+        clearMessages(messagesEl);
+      }
+
+      await refreshChats();
+    } catch (err) {
+      console.error("Delete error: ", err);
+      alert("Failed to delete chat: " + err.message);
+    }
+  })
 }
 
 // Create a new chat when clicking the NEW button

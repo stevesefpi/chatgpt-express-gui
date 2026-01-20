@@ -67,20 +67,86 @@ export async function fetchChats() {
   return data.chats || [];
 }
 
-export function renderChatList(chatListEl, chats, currentChatId, onSelectChat) {
+export function renderChatList(
+  chatListEl,
+  chats,
+  currentChatId,
+  onSelectChat,
+  onDeleteChat,
+) {
   chatListEl.innerHTML = "";
 
   for (const chat of chats) {
     const item = document.createElement("div");
     item.className = "chat-item";
-    item.textContent = chat.title || "Untitled chat";
+    // item.textContent = chat.title || "Untitled chat";
     item.dataset.chatId = chat.id;
 
     if (chat.id === currentChatId) item.classList.add("active");
 
-    item.addEventListener("click", () => onSelectChat(chat.id));
+    // Chat Title
+    const title = document.createElement("span");
+    title.className = "chat-item-title";
+    title.textContent = chat.title || "Untitled chat";
+    item.appendChild(title);
+
+    // Three-dot menu button for each chat
+    const menuBtn = document.createElement("button");
+    menuBtn.className = "chat-menu-btn";
+    menuBtn.innerHTML = `
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+  <circle cx="3" cy="8" r="1.5"/>
+  <circle cx="8" cy="8" r="1.5"/>
+  <circle cx="13" cy="8" r="1.5"/>
+</svg>
+
+`;
+    menuBtn.type = "button";
+    menuBtn.setAttribute("aria-label", "Chat options");
+    item.appendChild(menuBtn);
+
+    // Dropdown menu
+    const dropdown = document.createElement("div");
+    dropdown.className = "chat-dropdown";
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "delete-btn";
+    deleteBtn.textContent = "Delete";
+    deleteBtn.type = "button";
+    dropdown.appendChild(deleteBtn);
+
+    item.appendChild(dropdown);
+
+    title.addEventListener("click", (e) => {
+      e.stopPropagation();
+      onSelectChat(chat.id);
+    });
+
+    menuBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      document.querySelectorAll(".chat-dropdown.open").forEach((d) => {
+        if (d !== dropdown) d.classList.remove("open");
+      });
+
+      dropdown.classList.toggle("open");
+    });
+
+    // Click on delete button
+    deleteBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      dropdown.classList.remove("open");
+      onDeleteChat(chat.id);
+    });
+
     chatListEl.appendChild(item);
   }
+
+  // Close dropdown menu when clicking outside
+  document.addEventListener("click", () => {
+    document.querySelectorAll(".chat-dropdown.open").forEach((d) => {
+      d.classList.remove("open");
+    });
+  });
 }
 
 export async function fetchMessages(chatId) {
@@ -115,7 +181,7 @@ export function renderMessages(messagesEl, messages) {
               messagesEl,
               "",
               message.role,
-              message.created_at
+              message.created_at,
             );
             const contentEl = wrapper.querySelector(".msg-content");
 
@@ -202,5 +268,58 @@ export function initializeModelMenu(selectedModel) {
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") closeMenu();
-  })
+  });
+}
+
+// DELETE CHAT FUNCTIONALITY
+
+export async function deleteChat(chatId) {
+  const token = await window.getAccessToken?.();
+  if (!token) throw new Error("Not logged in");
+
+  const res = await fetch(`/chats/${chatId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to delete chat");
+  return data;
+}
+
+export function openDeleteModal(onConfirm) {
+  const modal = document.getElementById("deleteModal");
+  const confirmBtn = document.getElementById("confirmDeleteBtn");
+  const cancelBtn = document.getElementById("cancelDeleteBtn");
+
+  modal.classList.add("open");
+
+  const handleConfirm = () => {
+    modal.classList.remove("open");
+    confirmBtn.removeEventListener("click", handleConfirm);
+    cancelBtn.removeEventListener("click", handleCancel);
+    onConfirm();
+  };
+
+  const handleCancel = () => {
+    modal.classList.remove("open");
+    confirmBtn.removeEventListener("click", handleConfirm);
+    cancelBtn.removeEventListener("click", handleCancel);
+  };
+
+  confirmBtn.addEventListener("click", handleConfirm);
+  cancelBtn.addEventListener("click", handleCancel);
+
+  // Close on overlay click
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) handleCancel();
+  });
+  // Close on Escape key
+  const handleEscape = (e) => {
+    if (e.key === "Escape") {
+      handleCancel();
+      document.removeEventListener("keydown", handleEscape);
+    }
+  };
+  document.addEventListener("keydown", handleEscape);
 }

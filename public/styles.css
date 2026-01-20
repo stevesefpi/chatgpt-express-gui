@@ -212,10 +212,35 @@ button:hover {
 }
 
 .chat-item {
+  position: relative;
   padding: 10px 12px;
+  padding-right: 36px; 
   border-radius: 10px;
   cursor: pointer;
   background: rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.chat-menu-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 18px;
+  line-height: 1;
+  border-radius: 6px;
+  opacity: 0;
+  display: flex;           
+  align-items: center;     
+  justify-content: center;
+  transition: opacity 0.2s, background 0.2s;
 }
 
 .chat-image {
@@ -226,8 +251,138 @@ button:hover {
   background: rgba(255, 255, 255, 0.12);
 }
 
+.chat-menu-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.chat-item:hover .chat-menu-btn {
+  opacity: 1;
+}
+
 .chat-item.active {
   background: rgba(255, 255, 255, 0.18);
+}
+
+.chat-menu-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Dropdown menu */
+.chat-dropdown {
+  position: absolute;
+  right: 8px;
+  top: 100%;
+  margin-top: 4px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 140px;
+  display: none;
+  z-index: 1;
+}
+
+.chat-dropdown.open {
+  display: block;
+}
+
+.chat-dropdown button {
+  width: 100%;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  color: #0f172a;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 6px;
+}
+
+.chat-dropdown button:hover {
+  background: #f3f4f6;
+}
+
+.chat-dropdown button.delete-btn {
+  color: #dc2626;
+}
+
+.chat-dropdown button.delete-btn:hover {
+  background: #fee2e2;
+}
+
+/* DELETE CONFIRMATION MODAL */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.modal-overlay.open {
+  display: flex;
+}
+
+.modal {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  margin-bottom: 16px;
+}
+
+.modal-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 8px 0;
+}
+
+.modal-body {
+  color: #475569;
+  font-size: 15px;
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.modal-actions button {
+  padding: 10px 20px;
+}
+
+.btn-cancel {
+  background: #e5e7eb;
+  color: #0f172a;
+}
+
+.btn-cancel:hover {
+  background: #d1d5db;
+}
+
+.btn-delete {
+  background: #dc2626;
+  color: white;
+}
+
+.btn-delete:hover {
+  background: #b91c1c;
 }
 
 .sidebar-footer {

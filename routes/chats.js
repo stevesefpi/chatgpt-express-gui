@@ -63,7 +63,7 @@ router.post("/chats", requireAuth, async (req, res) => {
   }
 });
 
-router.delete("/chats", requireAuth, async (req, res) => {
+router.delete("/chats/:chatId", requireAuth, async (req, res) => {
   try {
     const { chatId } = req.params;
 
@@ -79,7 +79,7 @@ router.delete("/chats", requireAuth, async (req, res) => {
       .eq("chat_id", chatId);
 
       if (messagesErr) {
-        console.error("Messages deletion error: ", messagesError);
+        console.error("Messages deletion error: ", messagesErr);
         return res.status(500).json({ error: "Failed to delete messages"});
       }
 
