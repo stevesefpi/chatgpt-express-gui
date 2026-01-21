@@ -76,7 +76,23 @@
           <!-- Area where messages are loaded -->
           <div id="messages"></div>
 
+          <!-- Area with user input -->
           <form id="chatForm">
+
+            <div class="attach-wrapper">
+              <div class="attach">
+                <button id="attachBtn" type="button" aria-haspopup="true" aria-expanded="false" arial-label="Attach">
+                  +
+                </button>
+                <div class="attach-menu" id="attachMenu" role="menu" aria-hidden="true">
+                  <button id="attachImageBtn" type="button" role="menuItem">Upload image</button>
+                </div>
+
+                <!-- Hidden file input -->
+                 <input id="imageInput" type="file" accept="image/*" hidden />
+              </div>
+            </div>
+
             <textarea id="prompt" placeholder="Write your message..."></textarea>
             <button type="submit">Send</button>
           </form>
