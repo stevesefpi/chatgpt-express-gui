@@ -90,20 +90,22 @@ export function renderChatList(
     title.textContent = chat.title || "Untitled chat";
     item.appendChild(title);
 
-    // Three-dot menu button for each chat
+    // Menu wrapper anchoring dropdown to the three dots
+    const menuWrap = document.createElement("div");
+    menuWrap.className = "chat-menu-wrap";
+
+    // Three dot menu button for each chat title
     const menuBtn = document.createElement("button");
     menuBtn.className = "chat-menu-btn";
+    menuBtn.setAttribute("aria-label", "Chat options");
+    menuBtn.type = "button";
     menuBtn.innerHTML = `
   <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-  <circle cx="3" cy="8" r="1.5"/>
-  <circle cx="8" cy="8" r="1.5"/>
-  <circle cx="13" cy="8" r="1.5"/>
-</svg>
-
+    <circle cx="3" cy="8" r="1.5"/>
+    <circle cx="8" cy="8" r="1.5"/>
+    <circle cx="13" cy="8" r="1.5"/>
+  </svg>
 `;
-    menuBtn.type = "button";
-    menuBtn.setAttribute("aria-label", "Chat options");
-    item.appendChild(menuBtn);
 
     // Dropdown menu
     const dropdown = document.createElement("div");
@@ -115,7 +117,10 @@ export function renderChatList(
     deleteBtn.type = "button";
     dropdown.appendChild(deleteBtn);
 
-    item.appendChild(dropdown);
+    menuWrap.appendChild(menuBtn);
+    menuWrap.appendChild(dropdown);
+
+    item.appendChild(menuWrap);
 
     title.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -124,9 +129,15 @@ export function renderChatList(
 
     menuBtn.addEventListener("click", (e) => {
       e.stopPropagation();
+
       document.querySelectorAll(".chat-dropdown.open").forEach((d) => {
         if (d !== dropdown) d.classList.remove("open");
       });
+
+      // Position dropdown relative to "three-dot" button
+      const rect = menuBtn.getBoundingClientRect();
+      dropdown.style.top = `${rect.bottom + 4}px`;
+      dropdown.style.left = `${rect.left}px`;
 
       dropdown.classList.toggle("open");
     });

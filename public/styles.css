@@ -107,7 +107,7 @@ body {
 }
 
 .message code {
-  background: rgba(0,0,0,0.05);
+  background: rgba(0, 0, 0, 0.05);
   padding: 2px 6px;
   border-radius: 6px;
   font-size: 0.95em;
@@ -179,6 +179,7 @@ button:hover {
   color: white;
   display: flex;
   flex-direction: column;
+  z-index: 2;
 }
 
 .sidebar-header {
@@ -204,43 +205,50 @@ button:hover {
 
 #chatList {
   padding: 10px;
-  overflow-y: auto;
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  overflow-y: auto;
+  overflow-x: visible;
 }
 
 .chat-item {
-  position: relative;
   padding: 10px 12px;
-  padding-right: 36px; 
   border-radius: 10px;
   cursor: pointer;
   background: rgba(255, 255, 255, 0.06);
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 8px;
+}
+
+.chat-item-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .chat-menu-btn {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
   background: transparent;
   border: none;
   color: rgba(255, 255, 255, 0.6);
   cursor: pointer;
-  padding: 4px 8px;
-  font-size: 18px;
-  line-height: 1;
+  padding: 6px 8px;
   border-radius: 6px;
   opacity: 0;
-  display: flex;           
-  align-items: center;     
+  display: flex;
+  align-items: center;
   justify-content: center;
   transition: opacity 0.2s, background 0.2s;
+}
+
+.chat-menu-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .chat-image {
@@ -271,17 +279,14 @@ button:hover {
 
 /* Dropdown menu */
 .chat-dropdown {
-  position: absolute;
-  right: 8px;
-  top: 100%;
-  margin-top: 4px;
+  position: fixed;
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   min-width: 140px;
   display: none;
-  z-index: 1;
+  z-index: 2001;
 }
 
 .chat-dropdown.open {
@@ -402,6 +407,7 @@ button:hover {
   display: flex;
   flex-direction: column;
   background: #f7f7f8;
+  z-index: 1;
 }
 
 #topbar {
@@ -450,7 +456,7 @@ button:hover {
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
   padding: 6px;
   display: none;
 }
@@ -495,16 +501,16 @@ pre {
   overflow-x: auto;
   font-size: 14px;
   line-height: 1.5;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-               "Liberation Mono", "Courier New", monospace;
+    "Liberation Mono", "Courier New", monospace;
 }
 
 p code {
-  background: rgba(0,0,0,0.06);
+  background: rgba(0, 0, 0, 0.06);
   padding: 2px 6px;
   border-radius: 6px;
   font-size: 0.95em;
