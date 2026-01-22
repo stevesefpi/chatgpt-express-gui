@@ -56,17 +56,17 @@
               </button>
               <div class="model-menu" id="model-menu" role="menu" aria-hidden="true">
                 <button class="model-item" type="button" data-model="gpt-5.2" role="menuitem">
-                  GPT-5.2 
+                  GPT-5.2
                   <span class="hint">Plus model</span>
                 </button>
 
                 <button class="model-item" type="button" data-model="gpt-4.1" role="menuitem">
-                  GPT-4.1 
+                  GPT-4.1
                   <span class="hint">Older plus model</span>
                 </button>
 
                 <button class="model-item" type="button" data-model="gpt-4.1-mini" role="menuitem">
-                  GPT-4.1 Mini 
+                  GPT-4.1 Mini
                   <span class="hint">Cheaper and fast model</span>
                 </button>
               </div>
@@ -78,22 +78,27 @@
 
           <!-- Area with user input -->
           <form id="chatForm">
-
             <div class="attach-wrapper">
               <div class="attach">
-                <button id="attachBtn" type="button" aria-haspopup="true" aria-expanded="false" arial-label="Attach">
+                <button id="attachBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Attach">
                   +
                 </button>
                 <div class="attach-menu" id="attachMenu" role="menu" aria-hidden="true">
-                  <button id="attachImageBtn" type="button" role="menuItem">Upload image</button>
+                  <button id="attachImageBtn" type="button" role="menuitem">Upload image</button>
                 </div>
 
-                <!-- Hidden file input -->
-                 <input id="imageInput" type="file" accept="image/*" hidden />
+                <!-- Hidden file input - ADD multiple attribute -->
+                <input id="imageInput" type="file" accept="image/*" multiple hidden />
               </div>
             </div>
 
-            <textarea id="prompt" placeholder="Write your message..."></textarea>
+            <!-- Wrapper for textarea and previews -->
+            <div class="input-container">
+              <!-- Image previews INSIDE the input area -->
+              <div id="imagePreviewContainer"></div>
+              <textarea id="prompt" placeholder="Write your message..."></textarea>
+            </div>
+
             <button type="submit">Send</button>
           </form>
         </main>
@@ -101,7 +106,7 @@
     </div>
   </div>
 
-    <!-- DELETE CONFIRMATION MODAL -->
+  <!-- DELETE CONFIRMATION MODAL -->
   <div class="modal-overlay" id="deleteModal">
     <div class="modal">
       <div class="modal-header">

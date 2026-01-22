@@ -24,11 +24,21 @@ const chatForm = document.getElementById("chatForm");
 const promptEl = document.getElementById("prompt");
 const messagesEl = document.getElementById("messages");
 
+const imagePreviewContainer = document.getElementById("imagePreviewContainer");
+const imagePreview = document.getElementById("imagePreview");
+const previewImage = document.getElementById("previewImage");
+const removeImageBtn = document.getElementById("removeImageBtn");
+
 const chatListEl = document.getElementById("chatList");
 const newChatBtn = document.getElementById("newChatBtn");
+const attachBtn = document.getElementById("attachBtn");
+const attachMenu = document.getElementById("attachMenu");
+const attachImageBtn = document.getElementById("attachImageBtn");
+const imageInput = document.getElementById("imageInput");
 
 let currentChatId = null;
 let selectedModel = localStorage.getItem("selectedModel") || "gpt-5.2";
+let pendingImages = [];
 
 initializeModelMenu(selectedModel);
 
@@ -64,6 +74,104 @@ function handleDeleteChat(chatId) {
   })
 }
 
+function openAttachMenu() {
+  if (!attachMenu) return;
+  attachMenu.classList.add("open");
+  attachBtn?.setAttribute("aria-expanded", "true");
+  attachMenu.setAttribute("aria-hidden", "false");
+}
+
+function closeAttachMenu() {
+  if (!attachMenu) return;
+
+  if (attachMenu.contains(document.activeElement)) {
+    attachBtn?.focus();
+  }
+
+  attachMenu.classList.remove("open");
+  attachBtn?.setAttribute("aria-expanded", "false");
+  attachMenu.setAttribute("aria-hidden", "true");
+}
+
+attachBtn?.addEventListener("click", (e) => {
+  e.stopPropagation();
+  if (attachMenu?.classList.contains("open")) closeAttachMenu();
+  else openAttachMenu();
+});
+
+attachImageBtn?.addEventListener("click", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  closeAttachMenu();
+
+  if (imageInput) {
+    imageInput.value = "";
+    setTimeout(() => {
+      imageInput.click();
+    }, 100);
+  }
+});
+
+imageInput?.addEventListener("change", (e) => {
+  const files = Array.from(imageInput.files || []);
+  
+  if (files.length === 0) return;
+  
+  // Add new files to pending images
+  pendingImages.push(...files);
+  
+  // Render all previews
+  renderImagePreviews();
+  
+  closeAttachMenu();
+  
+  // Clear input for next selection
+  if (imageInput) imageInput.value = "";
+});
+
+function renderImagePreviews() {
+  imagePreviewContainer.innerHTML = "";
+  
+  pendingImages.forEach((file, index) => {
+    const imageUrl = URL.createObjectURL(file);
+    
+    const item = document.createElement("div");
+    item.className = "image-preview-item";
+    
+    const img = document.createElement("img");
+    img.src = imageUrl;
+    img.alt = file.name;
+    
+    const removeBtn = document.createElement("button");
+    removeBtn.className = "remove-btn";
+    removeBtn.textContent = "×";
+    removeBtn.type = "button";
+    removeBtn.onclick = () => {
+      pendingImages.splice(index, 1);
+      URL.revokeObjectURL(imageUrl);
+      renderImagePreviews();
+    };
+    
+    item.appendChild(img);
+    item.appendChild(removeBtn);
+    imagePreviewContainer.appendChild(item);
+  });
+}
+
+removeImageBtn?.addEventListener("click", () => {
+  pendingImageFile = null;
+  imagePreview.style.display = "none";
+  previewImage.src = "";
+  if (imageInput) imageInput.value = "";
+});
+
+// close when clicking elsewhere / escape
+document.addEventListener("click", () => closeAttachMenu());
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeAttachMenu();
+});
+
 // Create a new chat when clicking the NEW button
 
 newChatBtn?.addEventListener("click", async () => {
@@ -96,24 +204,40 @@ chatForm.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const text = promptEl.value.trim();
-  if (!text) return;
+  
+  if (!text && pendingImages.length === 0) {
+    alert("Please enter a message or select an image");
+    return;
+  }
 
   const now = getCurrentTime();
 
-  addMessage(messagesEl, text, "user", now);
+  // Show user message with images
+  if (pendingImages.length > 0) {
+    const userBubble = addMessage(messagesEl, "", "user", now);
+    const contentEl = userBubble.querySelector(".msg-content");
+    
+    const imagesHtml = pendingImages.map(file => {
+      const url = URL.createObjectURL(file);
+      return `<img class="chat-image" src="${url}" alt="Uploaded" style="max-width: 200px; border-radius: 8px; margin: 4px;" />`;
+    }).join('');
+    
+    contentEl.innerHTML = `
+      <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+        ${imagesHtml}
+      </div>
+      ${text ? `<p style="margin-top: 8px;">${text}</p>` : ''}
+    `;
+  } else {
+    addMessage(messagesEl, text, "user", now);
+  }
+
   promptEl.value = "";
 
-  const assistantBubble = addMessage(
-    messagesEl,
-    "Thinking...",
-    "assistant",
-    now,
-  );
+  const assistantBubble = addMessage(messagesEl, "Thinking...", "assistant", now);
 
   try {
-    console.log("[chat] getting token...");
     const token = await window.getAccessToken?.();
-    console.log("[chat] token:", token ? token.slice(0, 20) + "..." : token);
 
     if (!token) {
       assistantBubble.textContent = "Session expired, please log in again.";
@@ -139,6 +263,18 @@ chatForm.addEventListener("submit", async (e) => {
       await refreshChats();
     }
 
+    // Convert all images to base64
+    const imagesBase64 = await Promise.all(
+      pendingImages.map(file => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      })
+    );
+
     const response = await fetch("/chat", {
       method: "POST",
       headers: {
@@ -146,11 +282,16 @@ chatForm.addEventListener("submit", async (e) => {
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        message: text,
+        message: text || "What's in these images?",
         chatId: currentChatId,
         model: localStorage.getItem("selectedModel") || "gpt-5.2",
+        images: imagesBase64, // Send array of images
       }),
     });
+
+    // Clear pending images
+    pendingImages = [];
+    imagePreviewContainer.innerHTML = "";
 
     const data = await response.json();
 

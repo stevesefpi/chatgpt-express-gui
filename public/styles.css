@@ -14,7 +14,6 @@ body {
   flex-direction: column;
 }
 
-/* AUTH block */
 #auth {
   max-width: 520px;
   margin: 40px auto;
@@ -63,7 +62,6 @@ body {
   white-space: pre-wrap;
 }
 
-/* CHAT layout */
 #chat {
   height: 100vh;
   display: flex;
@@ -136,6 +134,7 @@ body {
 
 #chatForm {
   display: flex;
+  align-items: flex-end; 
   gap: 10px;
   padding: 16px;
   border-top: 1px solid #e5e7eb;
@@ -144,7 +143,7 @@ body {
 
 .attach-wrapper {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
 }
 
 .attach {
@@ -156,6 +155,7 @@ body {
 #attachBtn {
   width: 42px;
   height: 42px;
+  flex-shrink: 0;
   padding: 0;
   border-radius: 12px;
   background: white;
@@ -170,6 +170,11 @@ body {
 
 #attachBtn:hover {
   background: #f9fafb;
+}
+
+#chatForm > button[type="submit"] {
+  height: 42px; 
+  flex-shrink: 0; 
 }
 
 .attach-menu {
@@ -211,10 +216,15 @@ body {
   resize: none;
   padding: 12px;
   font-size: 16px;
-  border-radius: 10px;
-  border: 1px solid #ccc;
+  border: none;
+  border-radius: 0 0 10px 10px;
   min-height: 48px;
   max-height: 200px;
+  overflow-y: auto;
+}
+
+#prompt:focus {
+  outline: none;
 }
 
 button {
@@ -231,7 +241,6 @@ button:hover {
   background: #1e293b;
 }
 
-/* --- Chat layout with sidebar --- */
 #layout {
   height: 100vh;
   display: flex;
@@ -341,7 +350,6 @@ button:hover {
   color: rgba(255, 255, 255, 0.9);
 }
 
-/* Dropdown menu */
 .chat-dropdown {
   position: fixed;
   background: white;
@@ -578,4 +586,70 @@ p code {
   padding: 2px 6px;
   border-radius: 6px;
   font-size: 0.95em;
+}
+
+.input-container {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background: white;
+  overflow: hidden;
+  max-height: 300px;
+}
+
+#imagePreviewContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 8px 0 8px;
+  overflow-y: auto; 
+  max-height: 180px;
+}
+
+#imagePreviewContainer:empty {
+  display: none;
+}
+
+.image-preview-item {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.image-preview-item img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.image-preview-item .remove-btn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-preview-item .remove-btn:hover {
+  background: #b91c1c;
+}
+
+.input-container:focus-within {
+  border-color: #0f172a;
 }
