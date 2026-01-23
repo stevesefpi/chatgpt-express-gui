@@ -163,4 +163,9 @@ export function setLimiter(rateLimit) {
   return limiter;
 }
   
-
+export function formatImageForOpenAI(base64Image, mime = "image/jpeg") {
+  return {
+    type: "input_image",
+    image_url: `data:${mime};base64,${base64Image}`,
+  };
+}

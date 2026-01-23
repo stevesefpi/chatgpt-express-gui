@@ -9,6 +9,7 @@ import {
   base64ToBuffer,
   makeFileName,
   updateChatSummary,
+  formatImageForOpenAI,
 } from "../utils/utils.js";
 
 const router = express.Router();
@@ -18,32 +19,49 @@ const SUMMARY_MODEL = "gpt-4.1-nano";
 const SUMMARY_MAX_TOKENS = 500;
 const ALLOWED_MODELS = new Set(["gpt-5.2", "gpt-4.1", "gpt-4.1-mini"]);
 
-
 router.post("/chat", requireAuth, async (req, res) => {
   try {
-    const { message, chatId, model } = req.body;
+    const { message, chatId, model, images } = req.body;
 
-    if (!message || typeof message !== 'string') {
-      return res.status(400).json({ error: "A prompt message is required." });
+    if (
+      (!message || typeof message !== "string") &&
+      (!images || !Array.isArray(images) || images.length === 0)
+    ) {
+      return res
+        .status(400)
+        .json({ error: "A prompt message or image(s) are required." });
     }
 
-    if (!chatId || typeof chatId !== 'string') {
+    if (!chatId || typeof chatId !== "string") {
       return res.status(400).json({ error: "chatId is required." });
     }
 
     const supabaseUser = createSupabaseUserClient(req.token);
     if (!supabaseUser) {
-        return res.status(401).json({ error: "Invalid authorization token." });
+      return res.status(401).json({ error: "Invalid authorization token." });
     }
 
-    // Saving user message into the database
+    // Determine what to save in the database
+    // If images are present, save as JSON with images metadata
+
+    let contentToSave = message || "";
+
+    if (images && images.length > 0) {
+      contentToSave = JSON.stringify({
+        type: "user_images",
+        text: message || "",
+        imageCount: images.length,
+      });
+    }
+
+    // Save user message into the database
     const { error: userInsertError } = await supabaseUser
       .from("messages")
       .insert({
         chat_id: chatId,
         user_id: req.user.id,
         role: "user",
-        content: message,
+        content: contentToSave,
       });
 
     if (userInsertError) {
@@ -118,12 +136,23 @@ router.post("/chat", requireAuth, async (req, res) => {
 
     // Convert DB rows into OpenAI format
     for (const message of recentHistory) {
+
       const stringifiedMessage = String(message.content || "").trim();
       if (stringifiedMessage.startsWith("{")) {
         try {
           const obj = JSON.parse(stringifiedMessage);
           if (obj.type === "image") {
-            inputMessages.push({ role: message.role, content: "[Image]" });
+            inputMessages.push({
+              role: message.role,
+              content: "[Generated Image]",
+            });
+            continue;
+          }
+          if (obj.type === "user_images") {
+            inputMessages.push({
+              role: message.role,
+              content: obj.text || "[Images uploaded]",
+            });
             continue;
           }
         } catch {}
@@ -132,7 +161,38 @@ router.post("/chat", requireAuth, async (req, res) => {
       inputMessages.push({ role: message.role, content: message.content });
     }
 
-    // User-chosen model
+    const userMessageContent = [];
+
+    // Add text if present
+    if (message && message.trim()) {
+      userMessageContent.push({
+        type: "input_text",
+        text: message,
+      });
+    }
+
+    // Add images if present
+    if (images && Array.isArray(images) && images.length > 0) {
+      for (const b64 of images) {
+        userMessageContent.push({
+          type: "input_image",
+          image_url: `data:image/jpeg;base64,${b64}`,
+        });
+      }
+    }
+
+    // Add the user's current message to inputMessages
+    if (userMessageContent.length > 0) {
+      inputMessages.push({
+        role: "user",
+        content:
+          userMessageContent.length === 1 &&
+          userMessageContent[0].type === "input_text"
+            ? userMessageContent[0].text
+            : userMessageContent,
+      });
+    }
+
     const chosenModel = ALLOWED_MODELS.has(model) ? model : "gpt-5.2";
     // Calling OpenAI with context
     const response = await openai.responses.create({
@@ -144,12 +204,12 @@ router.post("/chat", requireAuth, async (req, res) => {
     const imageCall = (response.output || []).find(
       (o) => o.type === "image_generation_call",
     );
-    const imageBase64 = imageCall?.result || null;
+    const generatedImageBase64 = imageCall?.result || null;
 
     const assistantText = response.output_text || "";
 
-    if (imageBase64) {
-      const bytes = base64ToBuffer(imageBase64);
+    if (generatedImageBase64) {
+      const bytes = base64ToBuffer(generatedImageBase64);
       const path = makeFileName(req.user.id, crypto);
 
       const { data: uploadData, error: uploadErr } = await supabaseUser.storage
@@ -212,7 +272,7 @@ router.post("/chat", requireAuth, async (req, res) => {
       supabaseUser,
       openai: openai,
       chatId,
-      messages_limit: MESSAGES_LIMIT, 
+      messages_limit: MESSAGES_LIMIT,
       model: SUMMARY_MODEL,
       maxTokens: SUMMARY_MAX_TOKENS,
     }).catch((e) => console.error("Summary job failed:", e));
