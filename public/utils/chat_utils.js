@@ -1,3 +1,36 @@
+export function getDOMElements() {
+  const chatForm = document.getElementById("chatForm");
+  const promptEl = document.getElementById("prompt");
+  const messagesEl = document.getElementById("messages");
+  const imagePreviewContainer = document.getElementById(
+    "imagePreviewContainer",
+  );
+  const imagePreview = document.getElementById("imagePreview");
+  const previewImage = document.getElementById("previewImage");
+  const removeImageBtn = document.getElementById("removeImageBtn");
+  const chatListEl = document.getElementById("chatList");
+  const newChatBtn = document.getElementById("newChatBtn");
+  const attachBtn = document.getElementById("attachBtn");
+  const attachMenu = document.getElementById("attachMenu");
+  const attachImageBtn = document.getElementById("attachImageBtn");
+  const imageInput = document.getElementById("imageInput");
+  return {
+    chatForm,
+    promptEl,
+    messagesEl,
+    imagePreviewContainer,
+    imagePreview,
+    previewImage,
+    removeImageBtn,
+    chatListEl,
+    newChatBtn,
+    attachBtn,
+    attachMenu,
+    attachImageBtn,
+    imageInput,
+  };
+}
+
 export function addMessage(messagesEl, text, role, date) {
   // Create a wrapper for message content (div) and timestamp (span)
   const wrapper = document.createElement("div");
@@ -67,6 +100,8 @@ export async function fetchChats() {
   return data.chats || [];
 }
 
+let documentClickListenerAdded = false;
+
 export function renderChatList(
   chatListEl,
   chats,
@@ -119,17 +154,22 @@ export function renderChatList(
 
     menuWrap.appendChild(menuBtn);
     menuWrap.appendChild(dropdown);
-
     item.appendChild(menuWrap);
 
-    title.addEventListener("click", (e) => {
-      e.stopPropagation();
+    item.addEventListener("click", (e) => {
+      if (
+        e.target.closest(".chat-menu-btn") ||
+        e.target.closest(".chat-dropdown")
+      ) {
+        return;
+      }
       onSelectChat(chat.id);
     });
 
     menuBtn.addEventListener("click", (e) => {
       e.stopPropagation();
 
+      // Closing all other dropdowns
       document.querySelectorAll(".chat-dropdown.open").forEach((d) => {
         if (d !== dropdown) d.classList.remove("open");
       });
@@ -142,7 +182,7 @@ export function renderChatList(
       dropdown.classList.toggle("open");
     });
 
-    // Click on delete button
+    // Delete button
     deleteBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       dropdown.classList.remove("open");
@@ -153,11 +193,14 @@ export function renderChatList(
   }
 
   // Close dropdown menu when clicking outside
-  document.addEventListener("click", () => {
-    document.querySelectorAll(".chat-dropdown.open").forEach((d) => {
-      d.classList.remove("open");
+  if (!documentClickListenerAdded) {
+    document.addEventListener("click", () => {
+      document.querySelectorAll(".chat-dropdown.open").forEach((d) => {
+        d.classList.remove("open");
+      });
     });
-  });
+    documentClickListenerAdded = true;
+  }
 }
 
 export async function fetchMessages(chatId) {

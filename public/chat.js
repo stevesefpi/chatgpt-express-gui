@@ -1,40 +1,19 @@
 import {
+  getDOMElements,
   addMessage,
   clearMessages,
   setMessageHtml,
-  fetchChats,
   renderChatList,
+  fetchChats,
   fetchMessages,
   renderMessages,
   getCurrentTime,
   initializeModelMenu,
   deleteChat,
-  openDeleteModal
+  openDeleteModal,
 } from "./utils/chat_utils.js";
 
-window.addEventListener("error", (e) => {
-  console.error("GLOBAL ERROR:", e.message, e.error);
-});
-
-window.addEventListener("unhandledrejection", (e) => {
-  console.error("UNHANDLED PROMISE REJECTION:", e.reason);
-});
-
-const chatForm = document.getElementById("chatForm");
-const promptEl = document.getElementById("prompt");
-const messagesEl = document.getElementById("messages");
-
-const imagePreviewContainer = document.getElementById("imagePreviewContainer");
-const imagePreview = document.getElementById("imagePreview");
-const previewImage = document.getElementById("previewImage");
-const removeImageBtn = document.getElementById("removeImageBtn");
-
-const chatListEl = document.getElementById("chatList");
-const newChatBtn = document.getElementById("newChatBtn");
-const attachBtn = document.getElementById("attachBtn");
-const attachMenu = document.getElementById("attachMenu");
-const attachImageBtn = document.getElementById("attachImageBtn");
-const imageInput = document.getElementById("imageInput");
+const {chatForm, promptEl, messagesEl, imagePreviewContainer, imagePreview, previewImage, removeImageBtn,chatListEl, newChatBtn, attachBtn, attachMenu, attachImageBtn, imageInput } = getDOMElements();
 
 let currentChatId = null;
 let selectedModel = localStorage.getItem("selectedModel") || "gpt-5.2";
@@ -68,10 +47,10 @@ function handleDeleteChat(chatId) {
 
       await refreshChats();
     } catch (err) {
-      console.error("Delete error: ", err);
+      console.error("Delete error:", err);
       alert("Failed to delete chat: " + err.message);
     }
-  })
+  });
 }
 
 function openAttachMenu() {
@@ -160,7 +139,7 @@ function renderImagePreviews() {
 }
 
 removeImageBtn?.addEventListener("click", () => {
-  pendingImageFile = null;
+  pendingImages = null;
   imagePreview.style.display = "none";
   previewImage.src = "";
   if (imageInput) imageInput.value = "";
