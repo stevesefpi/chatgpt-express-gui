@@ -121,14 +121,14 @@ export async function updateChatSummary({
       {
         role: "system",
         content:
-          "Update a running conversation summary. Keep it concise and useful: user goals, constraints, decisions, preferences, key facts, open tasks. No fluff.",
+          "Maintain a running conversation summary. Preserve all relevant information from the CURRENT SUMMARY and carefully merge in NEW MESSAGES. Do NOT discard existing goals, constraints, preferences, facts, or decisions unless they are explicitly contradicted. The purpose is long-term memory. Be concise but information-dense.",
       },
       {
         role: "user",
         content:
-          `CURRENT SUMMARY:\n${oldSummary || "(empty)"}\n\n` +
+          `CURRENT SUMMARY (do not lose important info):\n${oldSummary || "(empty)"}\n\n` +
           `NEW MESSAGES:\n${formatted}\n\n` +
-          "Return ONLY the updated summary text.",
+          "Return ONLY the updated merged summary text.",
       },
     ],
     max_output_tokens: maxTokens,
