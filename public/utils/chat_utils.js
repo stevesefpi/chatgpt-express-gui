@@ -286,8 +286,17 @@ export function setSelectedModel(model) {
 }
 
 export function setSelectedThinking(effort) {
-  localStorage.setItem("thinkingEffort", effort);
+  const current = localStorage.getItem("thinkingEffort");
 
+  if (current === effort) {
+    localStorage.removeItem("thinkingEffort");
+    document.querySelectorAll(".thinking-item").forEach((btn) => {
+      btn.classList.remove("active");
+    });
+    return;
+  }
+
+  localStorage.setItem("thinkingEffort", effort);
   document.querySelectorAll(".thinking-item").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.effort === effort);
   })
@@ -333,6 +342,7 @@ export function initializeModelMenu(selectedModel) {
 
     const thinkingItem = event.target.closest(".thinking-item");
     if (thinkingItem) {
+      event.stopPropagation();
       setSelectedThinking(thinkingItem.dataset.effort);
       return;
     }
