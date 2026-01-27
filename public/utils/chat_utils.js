@@ -285,6 +285,15 @@ export function setSelectedModel(model) {
   });
 }
 
+export function setSelectedThinking(effort) {
+  localStorage.setItem("thinkingEffort", effort);
+
+  document.querySelectorAll(".thinking-item").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.effort === effort);
+  })
+}
+
+
 export function initializeModelMenu(selectedModel) {
   const modelButton = document.getElementById("modelButton");
   const menu = document.getElementById("model-menu");
@@ -292,6 +301,9 @@ export function initializeModelMenu(selectedModel) {
   if (!modelButton || !menu) return;
 
   setSelectedModel(selectedModel);
+
+  const savedEffort = localStorage.getItem("thinkingEffort");
+  if (savedEffort) setSelectedThinking(savedEffort);
 
   function openMenu() {
     menu.classList.add("open");
@@ -312,10 +324,18 @@ export function initializeModelMenu(selectedModel) {
   });
 
   menu.addEventListener("click", (event) => {
-    const item = event.target.closest(".model-item");
-    if (!item) return;
-    setSelectedModel(item.dataset.model);
-    closeMenu();
+    const modelItem = event.target.closest(".model-item");
+    if (modelItem) {
+      setSelectedModel(modelItem.dataset.model);
+      closeMenu();
+      return;
+    }
+
+    const thinkingItem = event.target.closest(".thinking-item");
+    if (thinkingItem) {
+      setSelectedThinking(thinkingItem.dataset.effort);
+      return;
+    }
   });
 
   document.addEventListener("click", () => closeMenu());

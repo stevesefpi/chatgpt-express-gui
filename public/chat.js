@@ -13,7 +13,21 @@ import {
   openDeleteModal,
 } from "./utils/chat_utils.js";
 
-const {chatForm, promptEl, messagesEl, imagePreviewContainer, imagePreview, previewImage, removeImageBtn,chatListEl, newChatBtn, attachBtn, attachMenu, attachImageBtn, imageInput } = getDOMElements();
+const {
+  chatForm,
+  promptEl,
+  messagesEl,
+  imagePreviewContainer,
+  imagePreview,
+  previewImage,
+  removeImageBtn,
+  chatListEl,
+  newChatBtn,
+  attachBtn,
+  attachMenu,
+  attachImageBtn,
+  imageInput,
+} = getDOMElements();
 
 let currentChatId = null;
 let selectedModel = localStorage.getItem("selectedModel") || "gpt-5.2";
@@ -23,7 +37,13 @@ initializeModelMenu(selectedModel);
 
 async function refreshChats() {
   const chats = await fetchChats();
-  renderChatList(chatListEl, chats, currentChatId, selectChat, handleDeleteChat);
+  renderChatList(
+    chatListEl,
+    chats,
+    currentChatId,
+    selectChat,
+    handleDeleteChat,
+  );
 }
 
 async function selectChat(chatId) {
@@ -94,34 +114,34 @@ attachImageBtn?.addEventListener("click", (e) => {
 
 imageInput?.addEventListener("change", (e) => {
   const files = Array.from(imageInput.files || []);
-  
+
   if (files.length === 0) return;
-  
+
   // Add new files to pending images
   pendingImages.push(...files);
-  
+
   // Render all previews
   renderImagePreviews();
-  
+
   closeAttachMenu();
-  
+
   // Clear input for next selection
   if (imageInput) imageInput.value = "";
 });
 
 function renderImagePreviews() {
   imagePreviewContainer.innerHTML = "";
-  
+
   pendingImages.forEach((file, index) => {
     const imageUrl = URL.createObjectURL(file);
-    
+
     const item = document.createElement("div");
     item.className = "image-preview-item";
-    
+
     const img = document.createElement("img");
     img.src = imageUrl;
     img.alt = file.name;
-    
+
     const removeBtn = document.createElement("button");
     removeBtn.className = "remove-btn";
     removeBtn.textContent = "×";
@@ -131,7 +151,7 @@ function renderImagePreviews() {
       URL.revokeObjectURL(imageUrl);
       renderImagePreviews();
     };
-    
+
     item.appendChild(img);
     item.appendChild(removeBtn);
     imagePreviewContainer.appendChild(item);
@@ -183,7 +203,7 @@ chatForm.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const text = promptEl.value.trim();
-  
+
   if (!text && pendingImages.length === 0) {
     alert("Please enter a message or select an image");
     return;
@@ -195,17 +215,19 @@ chatForm.addEventListener("submit", async (e) => {
   if (pendingImages.length > 0) {
     const userBubble = addMessage(messagesEl, "", "user", now);
     const contentEl = userBubble.querySelector(".msg-content");
-    
-    const imagesHtml = pendingImages.map(file => {
-      const url = URL.createObjectURL(file);
-      return `<img class="chat-image" src="${url}" alt="Uploaded" style="max-width: 200px; border-radius: 8px; margin: 4px;" />`;
-    }).join('');
-    
+
+    const imagesHtml = pendingImages
+      .map((file) => {
+        const url = URL.createObjectURL(file);
+        return `<img class="chat-image" src="${url}" alt="Uploaded" style="max-width: 200px; border-radius: 8px; margin: 4px;" />`;
+      })
+      .join("");
+
     contentEl.innerHTML = `
       <div style="display: flex; flex-wrap: wrap; gap: 8px;">
         ${imagesHtml}
       </div>
-      ${text ? `<p style="margin-top: 8px;">${text}</p>` : ''}
+      ${text ? `<p style="margin-top: 8px;">${text}</p>` : ""}
     `;
   } else {
     addMessage(messagesEl, text, "user", now);
@@ -213,7 +235,12 @@ chatForm.addEventListener("submit", async (e) => {
 
   promptEl.value = "";
 
-  const assistantBubble = addMessage(messagesEl, "Thinking...", "assistant", now);
+  const assistantBubble = addMessage(
+    messagesEl,
+    "Thinking...",
+    "assistant",
+    now,
+  );
 
   try {
     const token = await window.getAccessToken?.();
@@ -244,15 +271,25 @@ chatForm.addEventListener("submit", async (e) => {
 
     // Convert all images to base64
     const imagesBase64 = await Promise.all(
-      pendingImages.map(file => {
+      pendingImages.map((file) => {
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
-          reader.onload = () => resolve(reader.result.split(',')[1]);
+          reader.onload = () => resolve(reader.result.split(",")[1]);
           reader.onerror = reject;
           reader.readAsDataURL(file);
         });
-      })
+      }),
     );
+
+    const body = {
+      message: text || "What's in these images?",
+      chatId: currentChatId,
+      model: localStorage.getItem("selectedModel") || "gpt-5.2",
+      images: imagesBase64,
+    };
+
+    const effort = localStorage.getItem("thinkingEffort");
+    if (effort) body.thinkingEffort = effort;
 
     const response = await fetch("/chat", {
       method: "POST",
@@ -260,12 +297,7 @@ chatForm.addEventListener("submit", async (e) => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({
-        message: text || "What's in these images?",
-        chatId: currentChatId,
-        model: localStorage.getItem("selectedModel") || "gpt-5.2",
-        images: imagesBase64, // Send array of images
-      }),
+      body: JSON.stringify(body),
     });
 
     // Clear pending images

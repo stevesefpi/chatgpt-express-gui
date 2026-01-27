@@ -21,7 +21,7 @@ const ALLOWED_MODELS = new Set(["gpt-5.2", "gpt-4.1", "gpt-4.1-mini"]);
 
 router.post("/chat", requireAuth, async (req, res) => {
   try {
-    const { message, chatId, model, images } = req.body;
+    const { message, chatId, model, images, thinkingEffort } = req.body;
 
     if (
       (!message || typeof message !== "string") &&
@@ -136,7 +136,6 @@ router.post("/chat", requireAuth, async (req, res) => {
 
     // Convert DB rows into OpenAI format
     for (const message of recentHistory) {
-
       const stringifiedMessage = String(message.content || "").trim();
       if (stringifiedMessage.startsWith("{")) {
         try {
@@ -193,13 +192,25 @@ router.post("/chat", requireAuth, async (req, res) => {
       });
     }
 
+    const ALLOWED_EFFORTS = new Set(["medium", "high"]);
+    const chosenEffort = ALLOWED_EFFORTS.has(thinkingEffort)
+      ? thinkingEffort
+      : null;
+
     const chosenModel = ALLOWED_MODELS.has(model) ? model : "gpt-5.2";
-    // Calling OpenAI with context
-    const response = await openai.responses.create({
+
+    const payload = {
       model: chosenModel,
       tools: [{ type: "web_search" }, { type: "image_generation" }],
       input: inputMessages,
-    });
+    };
+
+    // Add reasoning only if the user selected the option from the model menu
+    if (chosenEffort) {
+      payload.reasoning = { effort: chosenEffort };
+    }
+    // Calling OpenAI with context
+    const response = await openai.responses.create(payload);
 
     const imageCall = (response.output || []).find(
       (o) => o.type === "image_generation_call",

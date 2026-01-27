@@ -564,6 +564,54 @@ button:hover {
   opacity: 0.7;
 }
 
+.menu-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 6px 0;
+}
+
+.menu-selection-label {
+  font-size: 12px;
+  opacity: 0.7;
+  padding: 6px 10px 4px 10px;
+}
+
+.thinking-item {
+  width: 100%;
+  text-align: left;
+  padding: 10px 10px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  background: #f3f4f6;     
+  color: #334155;         
+  display: grid;
+  grid-template-columns: 1fr auto; 
+  gap: 6px;
+}
+
+.thinking-item:hover {
+  background: #e5e7eb;
+}
+
+.thinking-item .hint {
+  grid-column: 1;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.thinking-item .tick {
+  grid-column: 2;
+  align-self: center;
+  opacity: 0;    
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.thinking-item.active .tick {
+  opacity: 1;
+}
+
 /* Code blocks */
 pre {
   background: #0b1020;
